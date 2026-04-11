@@ -61,6 +61,9 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 .prod-tag{display:inline-block;background:var(--blue-light);color:var(--blue);font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;}
 .tinput{width:48px;text-align:center;border:1px solid #E2E8F0;border-radius:4px;padding:3px;font-size:12px;}
 .pinput{width:68px;text-align:right;border:1px solid #E2E8F0;border-radius:4px;padding:3px;font-size:12px;}
+.type-select{width:74px;border:1px solid #E2E8F0;border-radius:4px;padding:3px 2px;font-size:11px;background:#fff;cursor:pointer;}
+.type-select option[value="구매"]{color:#EF4444;}
+.type-select option[value="판매+임대"]{color:#059669;}
 .check-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--gray3);cursor:pointer;}
 .check-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
 .check-row label{font-size:13px;font-weight:500;cursor:pointer;}
@@ -264,11 +267,11 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
             <tr><th>제품명</th><th>수량</th><th>금액(원)</th><th>형태</th><th>관리비</th></tr>
           </thead>
           <tbody>
-            <tr><td>POS</td><td><input class="tinput" id="qty_pos" value="1"/></td><td><input class="pinput" id="price_pos" placeholder="0"/></td><td><span class="prod-tag">임대</span></td><td><input class="pinput" id="mgt_pos" placeholder="0"/></td></tr>
-            <tr><td>키오스크</td><td><input class="tinput" id="qty_kiosk" value="1"/></td><td><input class="pinput" id="price_kiosk" placeholder="0"/></td><td><span class="prod-tag">임대</span></td><td><input class="pinput" id="mgt_kiosk" placeholder="0"/></td></tr>
-            <tr><td>테이블오더</td><td><input class="tinput" id="qty_table" value="1"/></td><td><input class="pinput" id="price_table" placeholder="0"/></td><td><span class="prod-tag">임대</span></td><td><input class="pinput" id="mgt_table" placeholder="0"/></td></tr>
-            <tr><td>QR오더</td><td><input class="tinput" id="qty_qr" value="30"/></td><td><input class="pinput" id="price_qr" placeholder="0"/></td><td><span class="prod-tag">임대</span></td><td><input class="pinput" id="mgt_qr" value="45000"/></td></tr>
-            <tr><td>카드단말기</td><td><input class="tinput" id="qty_card" value="1"/></td><td><input class="pinput" id="price_card" placeholder="0"/></td><td><span class="prod-tag">임대</span></td><td><input class="pinput" id="mgt_card" placeholder="0"/></td></tr>
+            <tr><td>POS</td><td><input class="tinput" id="qty_pos" value="1"/></td><td><input class="pinput" id="price_pos" placeholder="0"/></td><td><select class="type-select" id="type_pos"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_pos" placeholder="0"/></td></tr>
+            <tr><td>키오스크</td><td><input class="tinput" id="qty_kiosk" value="1"/></td><td><input class="pinput" id="price_kiosk" placeholder="0"/></td><td><select class="type-select" id="type_kiosk"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_kiosk" placeholder="0"/></td></tr>
+            <tr><td>테이블오더</td><td><input class="tinput" id="qty_table" value="1"/></td><td><input class="pinput" id="price_table" placeholder="0"/></td><td><select class="type-select" id="type_table"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_table" placeholder="0"/></td></tr>
+            <tr><td>QR오더</td><td><input class="tinput" id="qty_qr" value="30"/></td><td><input class="pinput" id="price_qr" placeholder="0"/></td><td><select class="type-select" id="type_qr"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_qr" value="45,000"/></td></tr>
+            <tr><td>카드단말기</td><td><input class="tinput" id="qty_card" value="1"/></td><td><input class="pinput" id="price_card" placeholder="0"/></td><td><select class="type-select" id="type_card"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_card" placeholder="0"/></td></tr>
           </tbody>
         </table>
         <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -283,12 +286,12 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
     </div>
 
     <div class="section-card">
-      <div class="section-head"><span class="num">4</span> CMS 출금이체 신청</div>
+      <div class="section-head"><span class="num">4</span> CMS 출금이체 신청 <span style="font-weight:400;opacity:.7;font-size:11px;">(선택)</span></div>
       <div class="section-body">
         <div class="info-grid">
-          <div class="info-item"><span class="info-label">은행명 *</span><input class="info-input" id="c_bank" placeholder="은행명"/></div>
-          <div class="info-item"><span class="info-label">출금계좌번호 *</span><input class="info-input" id="c_account" placeholder="계좌번호"/></div>
-          <div class="info-item"><span class="info-label">예금주명 *</span><input class="info-input" id="c_depositor" placeholder="예금주"/></div>
+          <div class="info-item"><span class="info-label">은행명</span><input class="info-input" id="c_bank" placeholder="은행명 (선택)"/></div>
+          <div class="info-item"><span class="info-label">출금계좌번호</span><input class="info-input" id="c_account" placeholder="계좌번호 (선택)"/></div>
+          <div class="info-item"><span class="info-label">예금주명</span><input class="info-input" id="c_depositor" placeholder="예금주 (선택)"/></div>
           <div class="info-item"><span class="info-label">월납입금액</span><input class="info-input" id="c_monthly" placeholder="예) 45,000원"/></div>
         </div>
       </div>
@@ -304,7 +307,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
         <div class="check-row"><input type="checkbox" id="chk_terms"><label for="chk_terms">이용약관 동의 (필수)</label></div>
         <div class="check-row"><input type="checkbox" id="chk_privacy"><label for="chk_privacy">개인정보 수집·이용 동의 (필수)</label></div>
         <div class="check-row"><input type="checkbox" id="chk_goods"><label for="chk_goods">물품반출 동의서 (필수)</label></div>
-        <div class="check-row"><input type="checkbox" id="chk_cms"><label for="chk_cms">CMS 출금이체 신청 동의 (필수)</label></div>
+        <div class="check-row"><input type="checkbox" id="chk_cms"><label for="chk_cms">CMS 출금이체 신청 동의 (선택)</label></div>
       </div>
     </div>
 
@@ -591,25 +594,41 @@ function toggleAllChecks(el){
   ['chk_terms','chk_privacy','chk_goods','chk_cms'].forEach(id=>document.getElementById(id).checked=el.checked);
 }
 
+
+/* ── 금액 콤마 포맷 ── */
+function formatComma(input){
+  const raw=input.value.replace(/,/g,'').replace(/[^0-9]/g,'');
+  input.value=raw?Number(raw).toLocaleString():'';
+}
+
+/* ── 계약 유형 판별 ── */
+function getContractDisplayType(contract){
+  const types=(contract.products||[]).map(p=>p.type||'임대');
+  if(types.includes('판매+임대')) return{text:'판매+임대',color:'#059669'};
+  if(types.includes('구매')) return{text:'판매',color:'#EF4444'};
+  return{text:'임대',color:'#0F172A'};
+}
+
 /* ── 제출 ── */
 async function submitContract(){
-  const required=[['c_company','상호명'],['c_owner','대표자명'],['c_bizno','사업자번호'],['c_mobile','대표자 휴대폰'],['c_addr','사업장주소'],['c_bank','은행명'],['c_account','출금계좌번호'],['c_depositor','예금주명']];
+  const required=[['c_company','상호명'],['c_owner','대표자명'],['c_bizno','사업자번호'],['c_mobile','대표자 휴대폰'],['c_addr','사업장주소']];
   for(const[id,name]of required){if(!v(id)){showToast(`⚠️ ${name}을(를) 입력해 주세요`);return;}}
-  if(!['chk_terms','chk_privacy','chk_goods','chk_cms'].every(id=>document.getElementById(id).checked)){showToast('⚠️ 필수 약관에 모두 동의해 주세요');return;}
+  if(!['chk_terms','chk_privacy','chk_goods'].every(id=>document.getElementById(id).checked)){showToast('⚠️ 필수 약관에 모두 동의해 주세요');return;}
   if(!hasSig()){showToast('⚠️ 서명을 해주세요');return;}
   showLoading('계약서 저장 중...');
   await sleep(800);
+  const sel=id=>document.getElementById(id)?.value||'임대';
   const contract={
     id:'C'+Date.now(),
     signedAt:new Date().toISOString(),
     supplier:{name:'대상정보통신',bizno:'607-10-86981',ceo:'김진선',tel:'051-903-4561',addr:'부산시 남구 동명로 146번길 123'},
     customer:{company:v('c_company'),owner:v('c_owner'),bizno:v('c_bizno'),tel:v('c_tel'),mobile:v('c_mobile'),email:v('c_email'),addr:v('c_addr')},
     products:[
-      {name:'POS',qty:v('qty_pos'),price:v('price_pos'),mgt:v('mgt_pos'),type:'임대'},
-      {name:'키오스크',qty:v('qty_kiosk'),price:v('price_kiosk'),mgt:v('mgt_kiosk'),type:'임대'},
-      {name:'테이블오더',qty:v('qty_table'),price:v('price_table'),mgt:v('mgt_table'),type:'임대'},
-      {name:'QR오더',qty:v('qty_qr'),price:v('price_qr'),mgt:v('mgt_qr'),type:'임대'},
-      {name:'카드단말기',qty:v('qty_card'),price:v('price_card'),mgt:v('mgt_card'),type:'임대'},
+      {name:'POS',qty:v('qty_pos'),price:v('price_pos'),mgt:v('mgt_pos'),type:sel('type_pos')},
+      {name:'키오스크',qty:v('qty_kiosk'),price:v('price_kiosk'),mgt:v('mgt_kiosk'),type:sel('type_kiosk')},
+      {name:'테이블오더',qty:v('qty_table'),price:v('price_table'),mgt:v('mgt_table'),type:sel('type_table')},
+      {name:'QR오더',qty:v('qty_qr'),price:v('price_qr'),mgt:v('mgt_qr'),type:sel('type_qr')},
+      {name:'카드단말기',qty:v('qty_card'),price:v('price_card'),mgt:v('mgt_card'),type:sel('type_card')},
     ],
     conditions:{period:v('c_period'),payday:v('c_payday')},
     memo:v('c_memo'),
@@ -705,10 +724,11 @@ function renderContractList(contracts,listId,showActions){
     const period=parseInt(c.conditions?.period||36);
     const expDate=new Date(d);expDate.setMonth(expDate.getMonth()+period);
     const expStr=expDate.toLocaleDateString('ko-KR');
+    const dt=getContractDisplayType(c);
     return`<div class="contract-item" data-id="${c.id}" data-actions="${showActions}">
       <div class="contract-avatar">${c.customer.company.slice(0,2)}</div>
       <div class="contract-info">
-        <div class="contract-name">${c.customer.company}</div>
+        <div class="contract-name">${c.customer.company} <span style="font-size:11px;font-weight:700;color:${dt.color};">[${dt.text}]</span></div>
         <div class="contract-meta">${c.customer.owner} · ${c.customer.mobile} · ${dateStr}</div>
         <div class="contract-meta" style="color:var(--gray5)">만기: ${expStr}</div>
       </div>
@@ -1063,13 +1083,29 @@ function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
   const baseUrl = window.location.href.split('?')[0].replace(/#.*$/,'');
-  const url = baseUrl + '?screen=' + target;
+  let url = baseUrl + '?screen=' + target;
+  if(isSign){
+    const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr',
+      'c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo',
+      'qty_pos','price_pos','mgt_pos','type_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
+      'qty_table','price_table','mgt_table','type_table',
+      'qty_qr','price_qr','mgt_qr','type_qr',
+      'qty_card','price_card','mgt_card','type_card'];
+    const params=new URLSearchParams();
+    params.set('screen','customer');
+    fields.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&el.value) params.set(id,el.value);
+    });
+    url=baseUrl+'?'+params.toString();
+  }
   document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
   document.getElementById('shareDesc').textContent = isSign
-    ? '고객에게 아래 링크를 보내면 핸드폰에서 바로 서명할 수 있습니다.'
+    ? '입력한 내용이 포함된 링크입니다. 고객에게 보내면 바로 서명할 수 있습니다.'
     : '고객에게 아래 링크를 보내면 사업자번호+대표자 성함으로 계약서를 조회할 수 있습니다.';
   document.getElementById('shareNote').textContent = isSign
-    ? '📌 링크를 열면 바로 서명 화면으로 이동합니다'
+    ? '📌 링크를 열면 입력 내용이 채워진 서명 화면으로 이동합니다'
     : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
   document.getElementById('shareLinkInput').value = url;
   document.getElementById('shareModal').classList.add('open');
@@ -1133,6 +1169,22 @@ function checkDeepLink(){
   const screen = params.get('screen');
   if(screen === 'customer' || screen === 'mypage'){
     showScreen(screen);
+    if(screen === 'customer'){
+      const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr',
+        'c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo',
+        'qty_pos','price_pos','mgt_pos','type_pos',
+        'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
+        'qty_table','price_table','mgt_table','type_table',
+        'qty_qr','price_qr','mgt_qr','type_qr',
+        'qty_card','price_card','mgt_card','type_card'];
+      fields.forEach(id=>{
+        const val=params.get(id);
+        if(val){
+          const el=document.getElementById(id);
+          if(el) el.value=val;
+        }
+      });
+    }
   }
 }
 
@@ -1163,6 +1215,13 @@ window.addEventListener('load', () => {
   document.getElementById('btn-sig-undo').addEventListener('click', undoSig);
   document.getElementById('btn-submit').addEventListener('click', submitContract);
   document.getElementById('chk_all').addEventListener('change', function(){ toggleAllChecks(this); });
+
+  /* 금액 콤마 자동 포맷 */
+  ['price_pos','price_kiosk','price_table','price_qr','price_card',
+   'mgt_pos','mgt_kiosk','mgt_table','mgt_qr','mgt_card','c_monthly'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',()=>formatComma(el));
+  });
 
   /* 성공 화면 */
   document.getElementById('btn-customer-print').addEventListener('click', customerPrint);
