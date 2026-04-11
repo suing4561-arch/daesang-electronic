@@ -315,6 +315,11 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="section-head"><span class="num">6</span> 전자서명</div>
       <div class="section-body">
         <p style="font-size:12px;color:var(--gray5);margin-bottom:10px;">아래 서명란에 손가락으로 직접 서명해 주세요</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:var(--gray2);border-radius:8px;">
+          <span style="font-size:12px;color:var(--gray5);">서명인</span>
+          <span id="sigNameDisplay" style="font-size:14px;font-weight:700;color:var(--text);flex:1;">-</span>
+          <span style="font-size:12px;color:var(--gray5);">(인)</span>
+        </div>
         <div class="sig-wrap" id="sigWrap">
           <canvas id="sigCanvas" class="sig-canvas"></canvas>
           <div class="sig-hint" id="sigHint">👆 여기에 서명하세요</div>
@@ -335,12 +340,11 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
   <div class="success-inner">
     <div class="success-icon">✓</div>
     <h2 class="success-title">서명이 완료되었습니다</h2>
-    <p class="success-sub">계약서가 성공적으로 저장되었습니다.<br>아래 버튼으로 계약서 사본을 저장하세요.</p>
-    <div style="margin-top:32px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px;">
-      <button id="btn-customer-print" style="width:100%;padding:16px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;">📄 내 계약서 사본 저장 (PDF)</button>
-      <button id="btn-home-from-success" style="width:100%;padding:14px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:transparent;color:rgba(255,255,255,.6);font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;">홈으로 돌아가기</button>
+    <p class="success-sub">계약서가 성공적으로 저장되었습니다.<br>아래 버튼으로 내 계약서를 확인하세요.</p>
+    <div style="margin-top:32px;width:100%;max-width:320px;">
+      <button id="btn-view-mycontract" style="width:100%;padding:16px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;">📋 내 계약서 확인하기</button>
     </div>
-    <p style="margin-top:24px;font-size:11px;color:rgba(255,255,255,.3);line-height:1.6;">"PDF 저장" 선택 시 계약서 사본이 저장됩니다<br>담당자가 별도로 연락드릴 예정입니다</p>
+    <p style="margin-top:24px;font-size:11px;color:rgba(255,255,255,.3);line-height:1.6;">담당자가 별도로 연락드릴 예정입니다</p>
   </div>
 </div>
 
@@ -457,27 +461,27 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
   <div class="modal-box" style="border-radius:var(--radius);">
     <div class="modal-handle"></div>
     <div class="modal-head">
-      <div class="modal-title" id="shareTitle">링크 공유</div>
+      <div class="modal-title">링크 공유</div>
       <button id="btn-share-close" class="modal-close">✕</button>
     </div>
-    <div class="modal-body" style="padding:16px 20px;">
-      <p style="font-size:13px;color:var(--gray5);margin-bottom:14px;" id="shareDesc"></p>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <input id="shareLinkInput" readonly style="flex:1;padding:10px 12px;border:1.5px solid var(--gray3);border-radius:8px;font-size:13px;font-family:var(--mono);background:var(--gray1);color:var(--text);outline:none;"/>
-        <button id="btn-copy-link" style="padding:10px 16px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">복사</button>
+    <div class="modal-body" style="padding:20px;">
+      <!-- 카드 미리보기 -->
+      <div style="border:1.5px solid var(--gray3);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="background:var(--navy);padding:14px 16px;">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.5px;margin-bottom:4px;">대상정보통신</div>
+          <div style="font-size:16px;font-weight:700;color:#fff;">전자계약서 서명 요청</div>
+        </div>
+        <div style="padding:12px 16px;background:var(--gray1);">
+          <div style="font-size:11px;color:var(--gray4);margin-bottom:4px;" id="shareNote"></div>
+          <div id="shareLinkDisplay" style="font-size:12px;color:var(--gray5);word-break:break-all;font-family:var(--mono);"></div>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button id="btn-share-kakao" style="padding:13px;border:none;border-radius:10px;background:#FEE500;color:#3A1D1D;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-          💬 카카오톡 공유
-        </button>
-        <button id="btn-share-sms" style="padding:13px;border:none;border-radius:10px;background:#25D366;color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-          💬 문자 공유
-        </button>
-        <button id="btn-share-native" style="padding:13px;border:1px solid var(--gray3);border-radius:10px;background:var(--white);color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;grid-column:1/-1;">
-          📤 다른 앱으로 공유 (카카오·문자·메일 등)
-        </button>
-      </div>
-      <p style="margin-top:14px;font-size:11px;color:var(--gray4);text-align:center;line-height:1.6;" id="shareNote"></p>
+      <input id="shareLinkInput" readonly style="display:none;"/>
+      <button id="btn-copy-link" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">🔗 링크 복사</button>
+      <button id="btn-share-native" style="width:100%;padding:13px;border:1px solid var(--gray3);border-radius:10px;background:var(--white);color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;">📤 다른 앱으로 공유</button>
+      <!-- 숨김 처리된 이전 버튼 (JS 호환용) -->
+      <button id="btn-share-kakao" style="display:none;"></button>
+      <button id="btn-share-sms" style="display:none;"></button>
     </div>
   </div>
 </div>
@@ -1022,7 +1026,10 @@ function buildContractHTML(c){
   <table style="margin-bottom:4px;">
     <tr>
       <td class="label center" style="width:18%;">고객(乙) 전자서명</td>
-      <td class="center" style="width:32%;padding:2px;"><img src="${c.signature}" class="pc-sig-img"/></td>
+      <td class="center" style="width:32%;padding:4px;">
+        <div style="font-size:9pt;font-weight:700;margin-bottom:2px;">${c.customer.owner}&nbsp;&nbsp;(인)</div>
+        <img src="${c.signature}" class="pc-sig-img"/>
+      </td>
       <td class="label center" style="width:18%;">담당자(甲) 서명</td>
       <td class="center" style="width:32%;height:60px;">&nbsp;</td>
     </tr>
@@ -1100,14 +1107,11 @@ function shareScreen(target){
     });
     url=baseUrl+'?'+params.toString();
   }
-  document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
-  document.getElementById('shareDesc').textContent = isSign
-    ? '입력한 내용이 포함된 링크입니다. 고객에게 보내면 바로 서명할 수 있습니다.'
-    : '고객에게 아래 링크를 보내면 사업자번호+대표자 성함으로 계약서를 조회할 수 있습니다.';
   document.getElementById('shareNote').textContent = isSign
-    ? '📌 링크를 열면 입력 내용이 채워진 서명 화면으로 이동합니다'
-    : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
+    ? '고객이 링크를 열면 바로 서명 화면으로 이동합니다'
+    : '고객이 링크를 열면 계약서 조회 화면으로 이동합니다';
   document.getElementById('shareLinkInput').value = url;
+  document.getElementById('shareLinkDisplay').textContent = url;
   document.getElementById('shareModal').classList.add('open');
 }
 
@@ -1184,6 +1188,27 @@ function checkDeepLink(){
           if(el) el.value=val;
         }
       });
+      /* 서명인 이름 표시 */
+      const ownerVal=params.get('c_owner');
+      if(ownerVal){const nd=document.getElementById('sigNameDisplay');if(nd)nd.textContent=ownerVal;}
+      /* 고객 뷰: 공유버튼 숨김 + 필드 잠금 */
+      if(params.get('c_company')){
+        const shareBtn=document.getElementById('btn-share-customer');
+        if(shareBtn) shareBtn.style.display='none';
+        document.querySelectorAll('#customer input[type=text],#customer input[type=tel],#customer input[type=email],#customer input:not([type=checkbox]):not([type=submit])').forEach(el=>{
+          el.readOnly=true;
+          el.style.background='#f8fafc';
+          el.style.color='#64748b';
+          el.style.cursor='not-allowed';
+        });
+        document.querySelectorAll('#customer select,#customer textarea').forEach(el=>{
+          el.disabled=true;
+          el.style.background='#f8fafc';
+          el.style.color='#64748b';
+          el.style.cursor='not-allowed';
+          el.style.pointerEvents='none';
+        });
+      }
     }
   }
 }
@@ -1216,6 +1241,12 @@ window.addEventListener('load', () => {
   document.getElementById('btn-submit').addEventListener('click', submitContract);
   document.getElementById('chk_all').addEventListener('change', function(){ toggleAllChecks(this); });
 
+  /* 서명인 이름 실시간 표시 */
+  document.getElementById('c_owner').addEventListener('input', function(){
+    const nd=document.getElementById('sigNameDisplay');
+    if(nd) nd.textContent=this.value||'-';
+  });
+
   /* 금액 콤마 자동 포맷 */
   ['price_pos','price_kiosk','price_table','price_qr','price_card',
    'mgt_pos','mgt_kiosk','mgt_table','mgt_qr','mgt_card','c_monthly'].forEach(id=>{
@@ -1224,8 +1255,14 @@ window.addEventListener('load', () => {
   });
 
   /* 성공 화면 */
-  document.getElementById('btn-customer-print').addEventListener('click', customerPrint);
-  document.getElementById('btn-home-from-success').addEventListener('click', () => showScreen('home'));
+  document.getElementById('btn-view-mycontract').addEventListener('click', () => {
+    showScreen('mypage');
+    if(currentContract){
+      document.getElementById('my_bizno').value = currentContract.customer.bizno||'';
+      document.getElementById('my_owner').value = currentContract.customer.owner||'';
+      mypageLogin();
+    }
+  });
 
   /* 관리자 화면 */
   document.getElementById('btn-home-from-admin').addEventListener('click', () => showScreen('home'));
