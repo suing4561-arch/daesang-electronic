@@ -8,8 +8,13 @@ const firebaseConfig = {
   messagingSenderId: "611998747428",
   appId: "1:611998747428:web:4b22853f4907859bba41b1"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch(e) {
+  console.warn('Firebase 초기화 실패 (오프라인 모드):', e);
+}
 
 /* ── 상수 / 상태 ── */
 const ADMIN_PW = '1234';
