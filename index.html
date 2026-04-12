@@ -1097,33 +1097,36 @@ function buildContractHTML(c){
 function printContract(){if(!currentContract)return;document.getElementById('printArea').innerHTML=buildContractHTML(currentContract);closeModal();setTimeout(()=>window.print(),200);}
 function savePDF(){
   if(!currentContract)return;
-  const el=document.getElementById('printArea');
-  el.innerHTML=buildContractHTML(currentContract);
-  /* 화면 밖에 렌더링 – 사용자 눈에 보이지 않으면서 html2canvas가 캡처 가능 */
-  el.style.cssText='display:block;position:fixed;left:-10000px;top:0;width:190mm;background:#fff;z-index:-1;';
+  const c=currentContract;
   closeModal();
   showLoading('PDF 생성 중...');
-  const c=currentContract;
+  const el=document.getElementById('printArea');
+  el.innerHTML=buildContractHTML(c);
+  /* absolute + 음수 left: html2canvas가 정상 캡처 (fixed+z-index:-1은 빈 캡처 유발) */
+  el.style.cssText='display:block;position:absolute;left:-9999px;top:0;width:210mm;background:#fff;';
   const fname=`대상정보통신_계약서_${c.customer.company}_${new Date(c.signedAt).toLocaleDateString('ko-KR').replace(/[\. ]/g,'')}.pdf`;
   function resetEl(){el.style.cssText='display:none;';}
-  if(typeof html2pdf !== 'undefined'){
-    html2pdf().set({
-      margin:[8,10,8,10],
-      filename:fname,
-      image:{type:'jpeg',quality:0.95},
-      html2canvas:{scale:2,useCORS:true,logging:false,windowWidth:794},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    }).from(el).save().then(()=>{
-      resetEl();hideLoading();showToast('✅ PDF가 저장되었습니다');
-    }).catch(()=>{
-      resetEl();hideLoading();
-      showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');
-      setTimeout(()=>window.print(),200);
-    });
-  } else {
+  function fallback(){
     resetEl();hideLoading();
+    document.getElementById('printArea').innerHTML=buildContractHTML(c);
     showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');
     setTimeout(()=>window.print(),200);
+  }
+  if(typeof html2pdf !== 'undefined'){
+    /* 폰트 로딩 완료 후 캡처 */
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(()=>{
+      html2pdf().set({
+        margin:[10,10,10,10],
+        filename:fname,
+        image:{type:'jpeg',quality:0.95},
+        html2canvas:{scale:2,useCORS:true,logging:false},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+      }).from(el).save().then(()=>{
+        resetEl();hideLoading();showToast('✅ PDF가 저장되었습니다');
+      }).catch(fallback);
+    });
+  } else {
+    fallback();
   }
 }
 function customerPrint(){
