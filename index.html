@@ -1100,21 +1100,27 @@ function savePDF(){
   const c=currentContract;
   closeModal();
   showLoading('PDF 생성 중...');
+  window.scrollTo(0,0); // 로딩 오버레이가 뷰포트를 덮도록 상단 이동
+
   const el=document.getElementById('printArea');
   el.innerHTML=buildContractHTML(c);
-  /* absolute + 음수 left: html2canvas가 정상 캡처 (fixed+z-index:-1은 빈 캡처 유발) */
-  el.style.cssText='display:block;position:absolute;left:-9999px;top:0;width:210mm;background:#fff;';
+  /* 오프스크린 없이 정상 흐름에 배치 — html2canvas가 정상 캡처
+     (position:absolute/fixed + 음수좌표는 html2canvas 빈캡처 유발) */
+  el.style.display='block';
+
   const fname=`대상정보통신_계약서_${c.customer.company}_${new Date(c.signedAt).toLocaleDateString('ko-KR').replace(/[\. ]/g,'')}.pdf`;
-  function resetEl(){el.style.cssText='display:none;';}
+  function resetEl(){el.style.display='none';}
   function fallback(){
     resetEl();hideLoading();
-    document.getElementById('printArea').innerHTML=buildContractHTML(c);
     showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');
     setTimeout(()=>window.print(),200);
   }
   if(typeof html2pdf !== 'undefined'){
-    /* 폰트 로딩 완료 후 캡처 */
-    (document.fonts ? document.fonts.ready : Promise.resolve()).then(()=>{
+    // 레이아웃 완료 + 폰트 로딩 대기 후 캡처
+    Promise.all([
+      document.fonts ? document.fonts.ready : Promise.resolve(),
+      new Promise(r=>setTimeout(r,400))
+    ]).then(()=>{
       html2pdf().set({
         margin:[10,10,10,10],
         filename:fname,
