@@ -376,12 +376,12 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="stats-row">
         <div class="stat-card accent"><div class="stat-num" id="statTotal">0</div><div class="stat-label">총 계약</div></div>
         <div class="stat-card blue"><div class="stat-num" id="statToday">0</div><div class="stat-label">오늘 서명</div></div>
-        <div class="stat-card warn"><div class="stat-num" id="statExpire">0</div><div class="stat-label">이번 달 만기</div></div>
+        <div class="stat-card warn"><div class="stat-num" id="statExpire">0</div><div class="stat-label">3개월 내 만기</div></div>
       </div>
 
       <div class="admin-tabs">
         <div class="admin-tab active" data-panel="tab-all">📋 전체 계약</div>
-        <div class="admin-tab" data-panel="tab-expire">⚠️ 3년 만기 관리</div>
+        <div class="admin-tab" data-panel="tab-expire">⚠️ 만기 임박 관리</div>
       </div>
 
       <div id="tab-all" class="admin-tab-panel active">
@@ -397,7 +397,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 
       <div id="tab-expire" class="admin-tab-panel">
         <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#92400E;line-height:1.6;">
-          ⚠️ <strong>이번 달 3년 만기 가맹점</strong> — 계약일 기준 36개월이 되는 가맹점 목록입니다.<br>
+          ⚠️ <strong>3개월 내 만기 예정 가맹점</strong> — 오늘부터 90일 이내에 계약 만기가 도래하는 가맹점 목록입니다.<br>
           만기 전 갱신 또는 해지 안내가 필요합니다.
         </div>
         <div id="expireList" class="contract-list"></div>
@@ -490,6 +490,8 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 <div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text" id="loadingText">저장 중...</div></div>
 <div class="toast" id="toast"></div>
 
+<!-- html2pdf -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -604,6 +606,7 @@ function formatComma(input){
   const raw=input.value.replace(/,/g,'').replace(/[^0-9]/g,'');
   input.value=raw?Number(raw).toLocaleString():'';
 }
+function parseAmt(v){return Number(String(v||'').replace(/,/g,''))||0;}
 
 /* ── 계약 유형 판별 ── */
 function getContractDisplayType(contract){
@@ -702,26 +705,29 @@ function renderAdminStats(contracts){
   const now=new Date();
   document.getElementById('statTotal').textContent=contracts.length;
   document.getElementById('statToday').textContent=contracts.filter(c=>new Date(c.signedAt).toDateString()===now.toDateString()).length;
-  const expiring=getExpiringThisMonth(contracts);
+  const expiring=getExpiringIn3Months(contracts);
   document.getElementById('statExpire').textContent=expiring.length;
   renderContractList(contracts,'contractList',true);
   renderExpireList(expiring);
 }
 
-function getExpiringThisMonth(contracts){
-  const now=new Date();
+function getExpiringIn3Months(contracts){
+  const now=new Date();now.setHours(0,0,0,0);
+  const future=new Date(now);future.setMonth(future.getMonth()+3);
   return contracts.filter(c=>{
     const signed=new Date(c.signedAt);
     const period=parseInt(c.conditions?.period||36);
     const expDate=new Date(signed);
     expDate.setMonth(expDate.getMonth()+period);
-    return expDate.getFullYear()===now.getFullYear()&&expDate.getMonth()===now.getMonth();
+    return expDate>=now&&expDate<=future;
   });
 }
 
 function renderContractList(contracts,listId,showActions){
   const list=document.getElementById(listId);
   if(!contracts.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>조건에 맞는 계약서가 없습니다</p></div>';return;}
+  const nowTs=new Date();nowTs.setHours(0,0,0,0);
+  const futureTs=new Date(nowTs);futureTs.setMonth(futureTs.getMonth()+3);
   list.innerHTML=contracts.map(c=>{
     const d=new Date(c.signedAt);
     const dateStr=d.toLocaleDateString('ko-KR')+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
@@ -729,14 +735,16 @@ function renderContractList(contracts,listId,showActions){
     const expDate=new Date(d);expDate.setMonth(expDate.getMonth()+period);
     const expStr=expDate.toLocaleDateString('ko-KR');
     const dt=getContractDisplayType(c);
-    return`<div class="contract-item" data-id="${c.id}" data-actions="${showActions}">
-      <div class="contract-avatar">${c.customer.company.slice(0,2)}</div>
+    const isExpiring=expDate>=nowTs&&expDate<=futureTs;
+    const daysLeft=Math.ceil((expDate-nowTs)/(1000*60*60*24));
+    return`<div class="contract-item${isExpiring?' expiring':''}" data-id="${c.id}" data-actions="${showActions}">
+      <div class="contract-avatar${isExpiring?' warn-av':''}">${isExpiring?'⚠️':c.customer.company.slice(0,2)}</div>
       <div class="contract-info">
         <div class="contract-name">${c.customer.company} <span style="font-size:11px;font-weight:700;color:${dt.color};">[${dt.text}]</span></div>
         <div class="contract-meta">${c.customer.owner} · ${c.customer.mobile} · ${dateStr}</div>
-        <div class="contract-meta" style="color:var(--gray5)">만기: ${expStr}</div>
+        <div class="contract-meta" style="color:${isExpiring?'#92400E':'var(--gray5)'}">만기: ${expStr}${isExpiring?` (D-${daysLeft})`:''}</div>
       </div>
-      <span class="contract-status status-done">서명완료</span>
+      <span class="contract-status ${isExpiring?'status-warn':'status-done'}">${isExpiring?'만기임박':'서명완료'}</span>
       <span class="contract-arrow">›</span>
     </div>`;
   }).join('');
@@ -745,17 +753,19 @@ function renderContractList(contracts,listId,showActions){
 function renderExpireList(contracts){
   const list=document.getElementById('expireList');
   if(!contracts.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div><p>이번 달 만기 가맹점이 없습니다</p></div>';return;}
+  const nowE=new Date();nowE.setHours(0,0,0,0);
   list.innerHTML=contracts.map(c=>{
     const d=new Date(c.signedAt);
     const period=parseInt(c.conditions?.period||36);
     const expDate=new Date(d);expDate.setMonth(expDate.getMonth()+period);
     const expStr=expDate.toLocaleDateString('ko-KR');
+    const daysLeft=Math.ceil((expDate-nowE)/(1000*60*60*24));
     return`<div class="contract-item expiring" data-id="${c.id}" data-actions="true">
       <div class="contract-avatar warn-av">⚠️</div>
       <div class="contract-info">
         <div class="contract-name">${c.customer.company}</div>
         <div class="contract-meta">${c.customer.owner} · ${c.customer.mobile}</div>
-        <div class="contract-meta" style="color:#92400E;font-weight:600;">만기일: ${expStr}</div>
+        <div class="contract-meta" style="color:#92400E;font-weight:600;">만기일: ${expStr} <span style="background:#FCD34D;padding:1px 6px;border-radius:10px;font-size:11px;">D-${daysLeft}</span></div>
       </div>
       <span class="contract-status status-warn">만기임박</span>
       <span class="contract-arrow">›</span>
@@ -815,7 +825,7 @@ function openDetail(id,showActions){
   const period=parseInt(c.conditions?.period||36);
   const exp=new Date(d);exp.setMonth(exp.getMonth()+period);
   document.getElementById('modalTitle').textContent=c.customer.company+' 계약서';
-  const prods=c.products.filter(p=>p.qty&&p.qty!=='0').map(p=>`<tr><td>${p.name}</td><td>${p.qty}</td><td>${p.price?Number(p.price).toLocaleString()+'원':'-'}</td><td>${p.type}</td><td>${p.mgt?Number(p.mgt).toLocaleString()+'원':'-'}</td></tr>`).join('');
+  const prods=c.products.filter(p=>p.qty&&p.qty!=='0').map(p=>`<tr><td>${p.name}</td><td>${p.qty}</td><td>${p.price?parseAmt(p.price).toLocaleString()+'원':'-'}</td><td>${p.type}</td><td>${p.mgt?parseAmt(p.mgt).toLocaleString()+'원':'-'}</td></tr>`).join('');
   document.getElementById('modalBody').innerHTML=`
     <div class="detail-section">
       <div class="detail-section-title">서명 일시</div>
@@ -975,9 +985,9 @@ function buildContractHTML(c){
     <tbody>
       ${c.products.map((p,i)=>`<tr>
         <td class="center">${p.name}</td><td class="center"></td><td class="center">${p.qty||''}</td>
-        <td class="center">${p.price?Number(p.price).toLocaleString():''}</td>
+        <td class="center">${p.price?parseAmt(p.price).toLocaleString():''}</td>
         <td class="center">${p.type}</td>
-        <td class="center">${p.mgt?Number(p.mgt).toLocaleString()+'원':''}</td>
+        <td class="center">${p.mgt?parseAmt(p.mgt).toLocaleString()+'원':''}</td>
         ${i===0?`<td class="center" rowspan="${c.products.length}">${c.products.filter(x=>x.qty).map(x=>x.name).join('·')}</td><td class="center" rowspan="${c.products.length}">${c.conditions?.period||36}개월</td><td class="small" rowspan="${c.products.length}" style="vertical-align:top;padding:4px;">${c.memo||''}</td>`:''}
       </tr>`).join('')}
     </tbody>
@@ -985,7 +995,7 @@ function buildContractHTML(c){
   <div class="section-title" style="margin-bottom:0;">◎ 주요공급 조건 및 특약사항(표3)</div>
   <table style="margin-bottom:4px;">
     <tr>
-      <td class="label" style="width:70px;">관 리 비/ASP</td><td class="val" style="width:130px;">${c.products.find(p=>p.mgt)?Number(c.products.find(p=>p.mgt).mgt).toLocaleString()+'원(부가세 별도)':''}</td>
+      <td class="label" style="width:70px;">관 리 비/ASP</td><td class="val" style="width:130px;">${c.products.find(p=>p.mgt)?parseAmt(c.products.find(p=>p.mgt).mgt).toLocaleString()+'원(부가세 별도)':''}</td>
       <td class="label" style="width:60px;">임 대 물 품</td><td class="val" style="width:120px;">${c.products.filter(p=>p.qty&&p.type==='임대').map(p=>p.name).join(', ')}</td>
       <td class="label" style="width:70px;">의무사용기간</td><td class="val">${c.conditions?.period||36}개월</td>
       <td class="label" style="width:60px;">지정출금일</td><td class="val">매월 ${c.conditions?.payday||1}일</td>
@@ -1046,33 +1056,76 @@ function buildContractHTML(c){
     대표자 <span style="border-bottom:1px solid #000;padding:0 20px;"></span> (인) &nbsp;
     대리인 <span style="border-bottom:1px solid #000;padding:0 20px;"></span> (인)
   </div>
+  <div style="border:2px solid #1a3a6b;border-radius:4px;padding:7px 12px;margin:6px 0;background:#eef3fb;text-align:center;">
+    <div style="font-size:9pt;font-weight:800;color:#1a3a6b;margin-bottom:3px;">【 전자계약서 인증본 】</div>
+    <div style="font-size:7pt;color:#333;line-height:1.9;">
+      본 계약서는 「전자서명법」 제3조에 의거하여 전자서명을 통해 적법하게 체결된 전자계약서로서, 수기 서명 계약서와 동일한 법적 효력을 가집니다.<br>
+      계약번호: <b>${c.id}</b> &nbsp;|&nbsp; 서명일시: <b>${yy}년 ${mm}월 ${dd}일 ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}</b> &nbsp;|&nbsp; 전자서명인: <b>${c.customer.owner}</b><br>
+      본 전자계약서는 원본과 동일하며, 무단으로 수정·변조·위조할 경우 관련 법령에 따른 민·형사상 책임이 따릅니다.<br>
+      <b>㈜ 대상정보통신</b> &nbsp;|&nbsp; 사업자등록번호: 607-10-86981 &nbsp;|&nbsp; 대표: 김진선 &nbsp;|&nbsp; TEL: 051-903-4561
+    </div>
+  </div>
   <div style="page-break-before:always;"></div>
-  <div class="section-title" style="text-align:center;font-size:10pt;margin-bottom:6px;">카드단말기·POS·키오스크·테이블오더·QR오더 서비스 이용 약관</div>
+  <div class="section-title" style="text-align:center;font-size:10pt;margin-bottom:4px;">카드단말기·POS·키오스크·테이블오더·QR오더 판매·할부·임대·무상·유지보수 및 서비스 이용 약관</div>
+  <div style="font-size:7pt;color:#444;text-align:center;margin-bottom:4px;">이 계약은 대상정보통신(이하 "갑")이 제공하는 카드단말기, POS, 기타 제품의 판매·임대·무상·유지보수 및 서비스를 가맹점(이하 "을")이 이용하는 데 필요한 제반 사항을 규정하고, 상호의 이익과 발전을 도모함을 목적으로 한다.</div>
   <table><tr>
-    <td style="width:50%;vertical-align:top;border:none;padding-right:6px;"><div class="pc-terms">
-      <b>제1조 (서비스 이용 계약 성립)</b> 가맹점이 신청서를 작성하여 청약을 하고 회사가 승낙한 때 계약이 성립합니다.<br><br>
-      <b>제2조 (서비스 이용)</b> 가맹점은 회사가 제공하는 제반 서비스를 이용하기 위해서 회사가 정한 표2의 카드단말기·POS·기타 거래조회서비스를 처리할 수 있는 통신프로그램이 탑재된 별도 부가장비를 가맹점에 설치하여야 합니다.<br><br>
-      <b>제3조 (계약 조건, 기간)</b> 계약기간은 표3에 명시된 기간이며 계약기간 만료 1개월 전에 서면으로 계약해지 통보를 하여야 하며, 쌍방의 통보가 없을 경우 계약기간을 3년 단위로 자동연장 합니다. 가맹점은 매월 표4의 자동이체로 납부하여야 합니다.<br><br>
-      <b>제4조 (기한이익의 상실)</b> ① 요금 3회 이상 연체 ② 약관 위반 ③ 사업 폐지·영업 정지 ④ 무상계약 약정건수 10% 이하 ⑤ 계약기간만료 전 사용 중지의 경우 잔여금액을 일괄 청구할 수 있습니다.<br><br>
-      <b>제5조 (소유권)</b> 임대·무상·유지보수 계약 기기에 대한 소유권은 회사에 있습니다.<br><br>
-      <b>제6조 (물품반출동의서)</b> 전조의 상황 발생 시 회사는 물품을 회수할 수 있습니다.<br><br>
-      <b>제7조 (준수사항)</b> 가맹점은 등록된 정보를 외부에 누설하거나 승인 없이 수리·개조를 시켜서는 안 됩니다. 서명패드에 싸인을 받아야 하며 무서명 시 발생하는 손실을 책임집니다.
+    <td style="width:50%;vertical-align:top;border:none;padding-right:5px;"><div class="pc-terms">
+      <b>제1조 (서비스 이용 계약 성립, 목적)</b> 가맹점이 앞면의 신청서를 작성하여 청약을 하고 회사가 승낙한 때 계약이 성립합니다. 가맹점이 신청서에 허위사항을 기재하거나 서비스 이용조건을 충족하지 못한 경우 회사는 가맹점의 서비스 이용을 승낙하지 않을 수 있습니다. 본 계약은 카드단말기, POS 기타 판매, 할부, 임대, 무상, 유지보수 및 서비스에 대하여 상호의 이익과 발전을 도모함을 목적으로 합니다.<br><br>
+      <b>제2조 (서비스 이용)</b> 가맹점은 회사가 제공하는 제반 서비스를 이용하기 위해서 회사가 정한 표2의 카드단말기, POS 기타 거래조회서비스를 처리할 수 있는 통신프로그램(보안 프로그램)이 탑재된 별도 부가장비를 가맹점에 설치하여야 합니다. 부가장비는 회사가 정한 기준을 충족하여야 합니다.<br><br>
+      <b>제3조 (계약 조건, 기간)</b> ① 가맹점은 회사로부터 표2의 카드단말기, POS 기타를 할부구매 및 임대, 무상, 유지보수 계약하여 사용할 수 있습니다. ② 가맹점은 회사와 표3 약정 및 계약내용을 준수하여야 합니다. ③ 계약기간 동안 가맹점은 타사 카드단말기·POS로 교체하거나 추가 설치 또는 경쟁업체 기기를 이용해서는 안 됩니다. ④ 할부대금·임대료·유지보수 대금 완납과 계약기간 완료 전에 서비스 이용을 중지하는 경우에는 계약의 해지로 봅니다. ⑤ 가맹점은 매월 표4의 자동이체로 납부하여야 합니다. ⑥ 계약기간 만료 1개월 전에 서면으로 계약해지 통보를 하여야 하며, 쌍방의 통보가 없을 경우 계약기간을 3년 단위로 자동 연장합니다.<br><br>
+      <b>제4조 (기한이익의 상실)</b> 다음의 경우 회사는 잔여 금액을 일괄 청구할 수 있습니다: ① 요금을 3회 이상 연체한 때 ② 약관을 위반하거나 불량거래자로 통지받은 때 ③ 사업을 폐지하거나 영업을 정지한 때 ④ 무상계약 약정건수의 10% 이하일 때 ⑤ 계약기간 만료 전 사용 중지·폐업·영업정지 시.<br><br>
+      <b>제5조 (카드단말기, POS, 기타의 소유권)</b> ① 임대·무상·유지보수 계약 기기에 대한 소유권은 회사에 있으며, 계약기간 완료 후 가맹점은 계약기간 연장을 통보하거나 폐업 시 반납하여야 합니다. ② 가맹점은 계약 기기를 타인에게 양도하거나 담보로 제공하거나 처분할 수 없습니다. 단, 회사의 사전 동의가 있는 경우는 예외로 합니다.<br><br>
+      <b>제6조 (물품반출동의서)</b> ① 전조의 상황 발생 시 "을"은 "갑" 소유 재산을 선량한 관리자로서 주의의무를 다해야 하고, "갑"의 요구 시 즉시 반환해야 합니다. "을"은 "갑"에게 물품반출동의서를 작성해 주어야 합니다. ② 물품 반환 시 현금 환산방법은 12개월 기준 10%씩 감가상각된 금액으로 계산합니다.<br><br>
+      <b>제7조 (준수사항)</b> ① 가맹점은 등록된 정보를 외부에 누설하거나 지정된 이외의 사람에게 수리·개조를 시켜서는 안 됩니다. ② 사전 승인 없이 다른 기기로 접속하거나 정보내용을 변경해서는 안 됩니다. ③ 제3자에게 단말기를 사용하게 하거나 양도 시 회사에 통지하여 정보를 변경하여야 합니다. ④ 구매 가맹점에 설치일로부터 1년간 무상 A/S를 제공합니다. 고의·부주의로 인한 장애 발생 시 별도 출장비 및 A/S 비용이 부담됩니다. ⑤ 부득이한 사정으로 사업주 변경이 가능하며 계약의 이행을 인수인계할 수 있습니다. ⑥ 폐업 시 반드시 회사에 통보하여 자동이체 수수료의 출금해지 요청을 하여야 하며, 이를 위반하여 기출금된 자동이체 수수료에 대하여 반환요청을 할 수 없습니다.
     </div></td>
-    <td style="width:50%;vertical-align:top;border:none;padding-left:6px;"><div class="pc-terms">
-      <b>제8조 (매출전표의 관리)</b> 가맹점은 여신전문금융법 및 기타 관련법령에 규정된 의무사항을 준수하여야 합니다. 자동이체 수수료는 1년 단위로 자동 연장되며 해지 시에는 7일 전 서면으로 접수해야 합니다.<br><br>
-      <b>제9조 (유지보수)</b> 제품설치 후 1년간 자체 하자 발생 시 무상으로 수리합니다. 다만 사용자 부주의로 인한 하자 발생 시는 실비를 청구할 수 있습니다. 무상서비스 기간 1년 이후 출장비가 청구됩니다.<br><br>
-      <b>제10조 (이용계약 해지)</b> 해지를 원하는 날로부터 7일 이전에 회사에 해지 요청을 하여야 하며 잔여기간 요금을 완납하여야 합니다.<br><br>
-      <b>제11조 (손해배상)</b> 계약 위반 시 공급금액의 2배를 배상합니다. 약정건수 미달 시 건당 90원 페널티를 부담합니다. 물품 반환 불가 시 소비자가격(부가세 포함)의 2배를 배상합니다.<br><br>
-      <b>제12조 (면책조항)</b> 천재지변, 불가항력, 은행·카드사 오류, 가맹점 귀책사유로 인한 손해에 대하여는 회사가 책임을 지지 않습니다.<br><br>
-      <b>제13조 (해석 및 관할법원)</b> 분쟁 시 합의에 이르지 못할 경우 법원의 관할은 "갑"의 사업장 주소지 관할법원으로 합니다.<br><br>
-      <div style="text-align:right;margin-top:8px;">대표자 &nbsp;<span style="border-bottom:1px solid #000;padding:0 30px;"></span>&nbsp; (인)</div>
+    <td style="width:50%;vertical-align:top;border:none;padding-left:5px;"><div class="pc-terms">
+      <b>제8조 (매출전표의 관리)</b> ① 가맹점은 여신전문금융법 및 기타 관련 법령에 규정된 가맹점의 의무사항을 준수하여야 합니다. ② 전화승인을 받은 경우에도 임프린트한 매출전표를 작성하여야 합니다. ③ "우편송부" 계약의 경우 전월 발생 전표를 매월 5일 전까지 우체통에 넣어주셔야 하며, "당사 방문수거" 계약인 경우는 직원 방문 시 제출하여야 합니다. ④ 자동입금 서비스 적용 매출전표를 가맹점이 카드사에 직접 제출하여 매출대금을 청구할 수 없습니다. ⑤ 매출전표 관리를 소홀히 하거나 제출 요청에 협조하지 않는 경우 회사는 서비스 이용을 중지하거나 해지할 수 있습니다. ⑥ 자동이체 수수료는 1년 단위로 자동 연장되며 해지 시에는 7일 전 서면(FAX 등) 또는 유선상으로 접수해야 합니다. ⑦ "을"은 단말기에 설치된 서명패드에 사인을 받아야 하며, 무서명 시 발생하는 모든 손실을 책임집니다. (단, 오만원 이하는 무서명이므로 제외)<br><br>
+      <b>제9조 (유지보수)</b> ① "갑"과 "을"은 신의와 성실의 원칙으로 제품을 유지보수하고 사용 관리합니다. ② "갑"은 제품 설치 후 1년간 자체적인 하자 발생 시 무상으로 수리합니다. 다만, "을" 또는 사용자의 부주의로 인한 하자 발생 시는 실비를 청구할 수 있습니다. ③ 무상서비스 기간인 1년이 지나면 "갑"은 출장비를 "을"에게 청구합니다. ④ POS 장비의 경우 사용목적 외 인터넷 사용과 바이러스·부주의로 하자가 발생할 경우 모든 실비와 출장비를 청구할 수 있습니다. ⑤ "갑"은 카드단말기와 POS, 기타 제품의 유지보수에 최선을 다합니다.<br><br>
+      <b>제10조 (이용계약 해지)</b> ① 해지를 원하는 날로부터 7일 이전에 회사에 해지 요청을 하여야 하며, 해지일까지 발생하는 서비스 이용요금 및 잔여기간 요금을 완납하여야 합니다. ② 다음의 경우 회사는 서비스를 중지하거나 해지할 수 있습니다: ⓐ 신용카드 가맹점 계약 해지 ⓑ 전표 미제출 ⓒ 여신전문금융업법 위반 ⓓ 서비스 이용료 3회 이상 연체 ⓔ 회사에 손해 발생 시. ③ "갑" 또는 "을"이 표3의 계약내용을 명백히 이행하지 아니하였을 때. ④ 일방 당사자의 부도, 파산, 가압류, 가처분 등으로 계약 이행이 불가능한 경우.<br><br>
+      <b>제11조 (손해배상)</b> ① 제3조·제4조·제10조 위반 시 제품 공급금액의 2배를 배상하여야 하며, 약정건수 미달 시 건당 90원 페널티를 부담하여야 합니다. ("을"은 일부 무상 설치라도 귀책사유로 계약 해지 시 동일하게 적용됩니다.) ② "을"의 귀책사유로 계약의 목적을 달성할 수 없을 때는 공급된 제품 원가보전금의 2배를 배상하여야 합니다. 설치물품의 분실·훼손 등으로 반환이 불가능할 때에는 소비자가격(부가세 포함)의 2배를 배상하여야 합니다. ③ 귀책사유가 있는 당사자가 손해배상에서 발생하는 모든 부대비용(채권추심 및 소송에 따른 일체의 비용)을 부담합니다.<br><br>
+      <b>제12조 (면책조항)</b> ① 천재지변, 금융기관의 파업 및 불가항력으로 서비스를 제공할 수 없는 경우 회사는 책임을 지지 않습니다. ② 은행·신용카드업자나 자료제공자의 오류·시스템 장애 또는 가맹점의 귀책사유로 인한 손해에 대하여는 회사가 책임을 지지 않습니다. ③ 전쟁, 폭동, 내란, 법령 제정, 노사분규, 기타 예측할 수 없는 불가항력의 사유로 서비스 제공이 불가한 경우 "갑"은 계약상의 제반 의무로부터 면제됩니다.<br><br>
+      <b>제13조 (해석 및 관할법원)</b> ① 본 계약상의 해석에 이견이 있거나 규정되지 아니한 사항은 관계법령 및 일반 상관례에 따릅니다. ② 본 계약의 효력은 계약서 작성 후 서명날인하면 완성으로 보고 효력이 발생됩니다. ③ 분쟁 시 합의에 이르지 못할 경우 법원의 관할은 "갑"의 사업장 주소지 관할법원으로 합니다.<br><br>
+      <div style="margin-top:6px;padding:6px 8px;border:1px solid #1a3a6b;border-radius:3px;background:#f5f8ff;font-size:7pt;">
+        본인은 위 약관의 내용을 충분히 읽고 이해하였으며, 이에 동의하고 본 계약을 성실히 이행할 것을 확약합니다.<br>
+        <div style="text-align:right;margin-top:5px;">대표자 &nbsp;<span style="border-bottom:1px solid #000;padding:0 30px;">&nbsp;</span>&nbsp; (인)</div>
+      </div>
     </div></td>
   </tr></table>
 </div>`;
 }
 
 function printContract(){if(!currentContract)return;document.getElementById('printArea').innerHTML=buildContractHTML(currentContract);closeModal();setTimeout(()=>window.print(),200);}
-function savePDF(){showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');printContract();}
+function savePDF(){
+  if(!currentContract)return;
+  const el=document.getElementById('printArea');
+  el.innerHTML=buildContractHTML(currentContract);
+  /* 화면 밖에 렌더링 – 사용자 눈에 보이지 않으면서 html2canvas가 캡처 가능 */
+  el.style.cssText='display:block;position:fixed;left:-10000px;top:0;width:190mm;background:#fff;z-index:-1;';
+  closeModal();
+  showLoading('PDF 생성 중...');
+  const c=currentContract;
+  const fname=`대상정보통신_계약서_${c.customer.company}_${new Date(c.signedAt).toLocaleDateString('ko-KR').replace(/[\. ]/g,'')}.pdf`;
+  function resetEl(){el.style.cssText='display:none;';}
+  if(typeof html2pdf !== 'undefined'){
+    html2pdf().set({
+      margin:[8,10,8,10],
+      filename:fname,
+      image:{type:'jpeg',quality:0.95},
+      html2canvas:{scale:2,useCORS:true,logging:false,windowWidth:794},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    }).from(el).save().then(()=>{
+      resetEl();hideLoading();showToast('✅ PDF가 저장되었습니다');
+    }).catch(()=>{
+      resetEl();hideLoading();
+      showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');
+      setTimeout(()=>window.print(),200);
+    });
+  } else {
+    resetEl();hideLoading();
+    showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');
+    setTimeout(()=>window.print(),200);
+  }
+}
 function customerPrint(){
   if(currentContract){
     document.getElementById('printArea').innerHTML=buildContractHTML(currentContract);
