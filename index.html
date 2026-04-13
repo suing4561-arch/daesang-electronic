@@ -131,8 +131,8 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(10,22,40,.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;}
 .modal-overlay.open{display:flex;}
-#deleteModal,#changePwModal{align-items:center;}
-#deleteModal .modal-box,#changePwModal .modal-box{border-radius:var(--radius);animation:popIn .25s cubic-bezier(.34,1.2,.64,1) both;}
+#deleteModal{align-items:center;}
+#deleteModal .modal-box{border-radius:var(--radius);animation:popIn .25s cubic-bezier(.34,1.2,.64,1) both;}
 .modal-box{background:var(--white);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;animation:slideUp .3s cubic-bezier(.34,1.2,.64,1) both;}
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 .modal-handle{width:36px;height:4px;background:var(--gray3);border-radius:2px;margin:10px auto 0;}
@@ -361,9 +361,10 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="login-logo">🔐</div>
       <h2 class="login-title">관리자 로그인</h2>
       <p class="login-sub">계약 목록 조회 및 출력 권한</p>
+      <input class="login-input" type="email" id="adminEmail" placeholder="이메일 입력"/>
       <input class="login-input" type="password" id="adminPw" placeholder="비밀번호 입력"/>
       <button id="btn-admin-login" class="login-btn">로그인</button>
-      <p style="margin-top:14px;font-size:11px;color:var(--gray4)">기본 비밀번호: 1234</p>
+      <button id="btn-admin-reset" style="width:100%;padding:10px;background:transparent;border:none;color:#1A56DB;font-family:inherit;font-size:13px;cursor:pointer;margin-top:4px;">🔑 비밀번호를 잊으셨나요?</button>
     </div>
   </div>
   <div id="adminDash" style="display:none;">
@@ -374,8 +375,8 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
           <div style="font-size:13px;color:var(--gray5);margin-top:2px;" id="adminDate"></div>
         </div>
         <div style="display:flex;gap:8px;">
-          <button id="btn-change-pw" class="nav-btn" style="background:var(--gray6);color:var(--white);border-radius:8px;padding:8px 14px;">🔑 비번변경</button>
           <button id="btn-admin-refresh" class="nav-btn" style="background:var(--blue);color:var(--white);border-radius:8px;padding:8px 14px;">🔄 새로고침</button>
+          <button id="btn-admin-logout" class="nav-btn" style="background:#EF4444;color:var(--white);border-radius:8px;padding:8px 14px;">🚪 로그아웃</button>
         </div>
       </div>
       <div class="stats-row">
@@ -500,30 +501,6 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
   </div>
 </div>
 
-<!-- ═══ CHANGE PASSWORD MODAL ═══ -->
-<div class="modal-overlay" id="changePwModal">
-  <div class="modal-box" style="border-radius:var(--radius);max-width:360px;margin:0 16px;">
-    <div class="modal-head">
-      <div class="modal-title">🔑 비밀번호 변경</div>
-      <button id="btn-changepw-close" class="modal-close">✕</button>
-    </div>
-    <div class="modal-body" style="padding:20px 24px;">
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;color:var(--gray5);margin-bottom:6px;">현재 비밀번호</div>
-        <input id="pw-current" type="password" class="login-input" style="margin-bottom:0;" placeholder="현재 비밀번호 입력"/>
-      </div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:12px;color:var(--gray5);margin-bottom:6px;">새 비밀번호</div>
-        <input id="pw-new" type="password" class="login-input" style="margin-bottom:0;" placeholder="새 비밀번호 입력"/>
-      </div>
-      <div style="margin-bottom:20px;">
-        <div style="font-size:12px;color:var(--gray5);margin-bottom:6px;">새 비밀번호 확인</div>
-        <input id="pw-confirm" type="password" class="login-input" style="margin-bottom:0;" placeholder="새 비밀번호 재입력"/>
-      </div>
-      <button id="btn-changepw-save" class="login-btn">변경 완료</button>
-    </div>
-  </div>
-</div>
 
 <!-- ═══ DELETE CONFIRM MODAL ═══ -->
 <div class="modal-overlay" id="deleteModal">
@@ -549,6 +526,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 /* ── Firebase 초기화 ── */
 const firebaseConfig = {
@@ -561,19 +539,19 @@ const firebaseConfig = {
   appId: "1:611998747428:web:4b22853f4907859bba41b1"
 };
 let db = null;
+let auth = null;
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
+  auth = firebase.auth();
 } catch(e) {
   console.warn('Firebase 초기화 실패 (오프라인 모드):', e);
 }
 
 /* ── 상수 / 상태 ── */
-const PW_KEY = 'daesang_admin_pw';
 const STORAGE_KEY = 'daesang_contracts';
 const TRASH_KEY = 'daesang_trash';
 let currentContract = null;
-function getAdminPw(){ return localStorage.getItem(PW_KEY)||'1234'; }
 
 /* ── 로컬스토리지 ── */
 function getContracts(){
@@ -717,13 +695,50 @@ async function submitContract(){
 function v(id){return(document.getElementById(id)||{}).value||'';}
 
 /* ── 관리자 로그인 ── */
-function checkLogin(){
-  if(document.getElementById('adminPw').value===getAdminPw()){
+async function checkLogin(){
+  const email = document.getElementById('adminEmail').value.trim();
+  const pw    = document.getElementById('adminPw').value;
+  if(!email || !pw){ showToast('⚠️ 이메일과 비밀번호를 입력하세요'); return; }
+  showLoading('로그인 중...');
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    hideLoading();
     document.getElementById('adminLogin').style.display='none';
     document.getElementById('adminDash').style.display='block';
     window._fbListening = false;
     loadAdminData();
-  }else showToast('❌ 비밀번호가 올바르지 않습니다');
+  } catch(e) {
+    hideLoading();
+    if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
+      showToast('❌ 이메일 또는 비밀번호가 올바르지 않습니다');
+    } else {
+      showToast('❌ 로그인 실패: ' + e.message);
+    }
+  }
+}
+
+async function resetPassword(){
+  const email = document.getElementById('adminEmail').value.trim();
+  if(!email){ showToast('⚠️ 이메일을 먼저 입력해 주세요'); return; }
+  showLoading('재설정 메일 발송 중...');
+  try {
+    await auth.sendPasswordResetEmail(email);
+    hideLoading();
+    showToast('✅ ' + email + ' 으로 재설정 링크를 보냈습니다');
+  } catch(e) {
+    hideLoading();
+    showToast('❌ 발송 실패: ' + e.message);
+  }
+}
+
+function adminLogout(){
+  if(auth) auth.signOut();
+  document.getElementById('adminLogin').style.display='flex';
+  document.getElementById('adminDash').style.display='none';
+  document.getElementById('adminEmail').value='';
+  document.getElementById('adminPw').value='';
+  window._fbListening = false;
+  showToast('로그아웃 되었습니다');
 }
 
 /* ── 관리자 탭 ── */
@@ -1471,27 +1486,6 @@ function checkDeepLink(){
   }
 }
 
-/* ── 비밀번호 변경 ── */
-function openChangePwModal(){
-  document.getElementById('pw-current').value='';
-  document.getElementById('pw-new').value='';
-  document.getElementById('pw-confirm').value='';
-  document.getElementById('changePwModal').classList.add('open');
-}
-function closeChangePwModal(){
-  document.getElementById('changePwModal').classList.remove('open');
-}
-function saveNewPassword(){
-  const cur=document.getElementById('pw-current').value;
-  const nw=document.getElementById('pw-new').value;
-  const cf=document.getElementById('pw-confirm').value;
-  if(cur!==getAdminPw()){showToast('❌ 현재 비밀번호가 올바르지 않습니다');return;}
-  if(!nw){showToast('⚠️ 새 비밀번호를 입력하세요');return;}
-  if(nw!==cf){showToast('⚠️ 새 비밀번호가 일치하지 않습니다');return;}
-  localStorage.setItem(PW_KEY,nw);
-  closeChangePwModal();
-  showToast('✅ 비밀번호가 변경되었습니다');
-}
 
 /* ── 유틸 ── */
 function showLoading(msg){document.getElementById('loadingText').textContent=msg||'처리 중...';document.getElementById('loading').classList.add('show');}
@@ -1546,16 +1540,12 @@ window.addEventListener('load', () => {
 
   /* 관리자 화면 */
   document.getElementById('btn-home-from-admin').addEventListener('click', () => showScreen('home'));
+  document.getElementById('adminEmail').addEventListener('keydown', e => { if(e.key==='Enter') checkLogin(); });
   document.getElementById('adminPw').addEventListener('keydown', e => { if(e.key==='Enter') checkLogin(); });
   document.getElementById('btn-admin-login').addEventListener('click', checkLogin);
+  document.getElementById('btn-admin-reset').addEventListener('click', resetPassword);
+  document.getElementById('btn-admin-logout').addEventListener('click', adminLogout);
   document.getElementById('btn-admin-refresh').addEventListener('click', loadAdminData);
-  document.getElementById('btn-change-pw').addEventListener('click', openChangePwModal);
-  document.getElementById('btn-changepw-close').addEventListener('click', closeChangePwModal);
-  document.getElementById('btn-changepw-save').addEventListener('click', saveNewPassword);
-  document.getElementById('changePwModal').addEventListener('click', function(e){ if(e.target===this) closeChangePwModal(); });
-  ['pw-current','pw-new','pw-confirm'].forEach(id=>{
-    document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') saveNewPassword(); });
-  });
   document.getElementById('btn-filter').addEventListener('click', applyFilter);
   document.getElementById('btn-export').addEventListener('click', exportExcel);
 
