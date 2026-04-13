@@ -9,15 +9,16 @@ const firebaseConfig = {
   appId: "1:611998747428:web:4b22853f4907859bba41b1"
 };
 let db = null;
+let auth = null;
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
+  auth = firebase.auth();
 } catch(e) {
   console.warn('Firebase 초기화 실패 (오프라인 모드):', e);
 }
 
 /* ── 상수 / 상태 ── */
-const ADMIN_PW = '1234';
 const STORAGE_KEY = 'daesang_contracts';
 let currentContract = null;
 
@@ -139,13 +140,50 @@ async function submitContract(){
 function v(id){return(document.getElementById(id)||{}).value||'';}
 
 /* ── 관리자 로그인 ── */
-function checkLogin(){
-  if(document.getElementById('adminPw').value===ADMIN_PW){
+async function checkLogin(){
+  const email = document.getElementById('adminEmail').value.trim();
+  const pw    = document.getElementById('adminPw').value;
+  if(!email || !pw){ showToast('⚠️ 이메일과 비밀번호를 입력하세요'); return; }
+  showLoading('로그인 중...');
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    hideLoading();
     document.getElementById('adminLogin').style.display='none';
     document.getElementById('adminDash').style.display='block';
     window._fbListening = false;
     loadAdminData();
-  }else showToast('❌ 비밀번호가 올바르지 않습니다');
+  } catch(e) {
+    hideLoading();
+    if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
+      showToast('❌ 이메일 또는 비밀번호가 올바르지 않습니다');
+    } else {
+      showToast('❌ 로그인 실패: ' + e.message);
+    }
+  }
+}
+
+async function resetPassword(){
+  const email = document.getElementById('adminEmail').value.trim();
+  if(!email){ showToast('⚠️ 이메일을 먼저 입력해 주세요'); return; }
+  showLoading('재설정 메일 발송 중...');
+  try {
+    await auth.sendPasswordResetEmail(email);
+    hideLoading();
+    showToast('✅ ' + email + ' 으로 재설정 링크를 보냈습니다');
+  } catch(e) {
+    hideLoading();
+    showToast('❌ 발송 실패: ' + e.message);
+  }
+}
+
+function adminLogout(){
+  if(auth) auth.signOut();
+  document.getElementById('adminLogin').style.display='flex';
+  document.getElementById('adminDash').style.display='none';
+  document.getElementById('adminEmail').value='';
+  document.getElementById('adminPw').value='';
+  window._fbListening = false;
+  showToast('로그아웃 되었습니다');
 }
 
 /* ── 관리자 탭 ── */
@@ -681,8 +719,11 @@ window.addEventListener('load', () => {
 
   /* 관리자 화면 */
   document.getElementById('btn-home-from-admin').addEventListener('click', () => showScreen('home'));
+  document.getElementById('adminEmail').addEventListener('keydown', e => { if(e.key==='Enter') checkLogin(); });
   document.getElementById('adminPw').addEventListener('keydown', e => { if(e.key==='Enter') checkLogin(); });
   document.getElementById('btn-admin-login').addEventListener('click', checkLogin);
+  document.getElementById('btn-admin-reset').addEventListener('click', resetPassword);
+  document.getElementById('btn-admin-logout').addEventListener('click', adminLogout);
   document.getElementById('btn-admin-refresh').addEventListener('click', loadAdminData);
   document.getElementById('btn-filter').addEventListener('click', applyFilter);
   document.getElementById('btn-export').addEventListener('click', exportExcel);
