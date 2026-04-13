@@ -1206,7 +1206,7 @@ function buildContractHTML(c){
     <tr><td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td class="val">${c.cms?.depositor||''}</td>
       <td class="label">예금주 주민번호</td><td class="val"></td><td class="label">월 납입금액</td><td class="val">${c.cms?.monthly||''}</td></tr>
     <tr><td class="label">지정출금일자</td><td class="val">매 월 ${c.conditions?.payday||1}일</td>
-      <td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td colspan="3" class="val small">본 신청과 관련하여 본인은 금융거래정보(거래은행, 계좌번호)를 출금이체 신규 신청하는 때로부터 해지 신청할 때까지 상기수납기관에 제공하는 것에 동의하며, 출금이체 거래를 신청합니다. <span style="margin-left:16px;">서명: <span style="border-bottom:1px solid #000;padding:0 28px;">&nbsp;</span> (인)</span></td></tr>
+      <td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td colspan="3" class="val small">본 신청과 관련하여 본인은 금융거래정보(거래은행, 계좌번호)를 출금이체 신규 신청하는 때로부터 해지 신청할 때까지 상기수납기관에 제공하는 것에 동의하며, 출금이체 거래를 신청합니다. <span style="margin-left:16px;display:inline-flex;align-items:center;gap:3px;vertical-align:middle;">서명: <b>${c.customer.owner}</b> <img src="${c.signature}" style="height:22px;max-width:55px;vertical-align:middle;"> (인)</span></td></tr>
   </table>
   <table style="margin-bottom:4px;"><tr>
     <td style="width:50%;vertical-align:top;border:none;padding:0 3px 0 0;">
@@ -1249,7 +1249,7 @@ function buildContractHTML(c){
   <div class="pc-footer">
     본인은 위 기재사항을 사실과 다름없이 기재하였고 &quot;갑&quot;의 영업자로부터 본 계약내용에 대하여 충분한 설명을 듣고 잘 이해하였으며 본 약정서의 사본을 확실히 수령하였으므로 본 약정내용을 성실히 이행할 것을 확약합니다.<br>
     <span style="margin-right:40px;">신청일자: ${yy}년 ${mm}월 ${dd}일</span>
-    대표자 <span style="border-bottom:1px solid #000;padding:0 20px;"></span> (인) &nbsp;
+    대표자 <span style="display:inline-flex;align-items:center;gap:3px;vertical-align:middle;"><b>${c.customer.owner}</b> <img src="${c.signature}" style="height:22px;max-width:55px;vertical-align:middle;"></span> (인) &nbsp;
     대리인 <span style="border-bottom:1px solid #000;padding:0 20px;"></span> (인)
   </div>
   <div style="border:2px solid #1a3a6b;border-radius:4px;padding:7px 12px;margin:6px 0;background:#eef3fb;text-align:center;">
@@ -1283,7 +1283,7 @@ function buildContractHTML(c){
       <b>제13조 (해석 및 관할법원)</b> ① 본 계약상의 해석에 이견이 있거나 규정되지 아니한 사항은 관계법령 및 일반 상관례에 따릅니다. ② 본 계약의 효력은 계약서 작성 후 서명날인하면 완성으로 보고 효력이 발생됩니다. ③ 분쟁 시 합의에 이르지 못할 경우 법원의 관할은 "갑"의 사업장 주소지 관할법원으로 합니다.<br><br>
       <div style="margin-top:6px;padding:6px 8px;border:1px solid #1a3a6b;border-radius:3px;background:#f5f8ff;font-size:7pt;">
         본인은 위 약관의 내용을 충분히 읽고 이해하였으며, 이에 동의하고 본 계약을 성실히 이행할 것을 확약합니다.<br>
-        <div style="text-align:right;margin-top:5px;">대표자 &nbsp;<span style="border-bottom:1px solid #000;padding:0 30px;">&nbsp;</span>&nbsp; (인)</div>
+        <div style="text-align:right;margin-top:5px;display:flex;align-items:center;justify-content:flex-end;gap:4px;">대표자 &nbsp;<b>${c.customer.owner}</b> <img src="${c.signature}" style="height:22px;max-width:55px;vertical-align:middle;"> (인)</div>
       </div>
     </div></td>
   </tr></table>
