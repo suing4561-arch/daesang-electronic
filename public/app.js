@@ -640,8 +640,8 @@ function shareKakao(){
   const url = document.getElementById('shareLinkInput').value;
   const isSign = shareTarget === 'customer';
   const text = isSign
-    ? '[대상정보통신] 전자서명 계약서 서명 요청\n아래 링크를 클릭하여 계약서에 서명해 주세요.\n\n' + url
-    : '[대상정보통신] 계약서 조회\n아래 링크에서 사업자번호+대표자 성함으로 계약서를 확인하세요.\n\n' + url;
+    ? '[대상정보통신] 전자서명 계약서 서명 요청\n아래 링크를 클릭하여 계약서에 서명해 주세요.'
+    : '[대상정보통신] 계약서 조회\n사업자번호+대표자 성함으로 계약서를 확인하세요.';
   const kakaoUrl = 'kakaolink://send?text=' + encodeURIComponent(text);
   const fallback = 'https://sharer.kakao.com/talk/friends/picker/link?url=' + encodeURIComponent(url);
   const a = document.createElement('a'); a.href = kakaoUrl;
