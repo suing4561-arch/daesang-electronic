@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "contracts": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "trash": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "tempForms": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
