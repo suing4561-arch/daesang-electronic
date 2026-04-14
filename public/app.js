@@ -11,7 +11,9 @@ const firebaseConfig = {
 let db = null;
 let auth = null;
 try {
-  firebase.initializeApp(firebaseConfig);
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
   db = firebase.database();
   auth = firebase.auth();
 } catch(e) {
@@ -612,9 +614,16 @@ function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
   const baseUrl = 'https://daesang-contract.web.app';
-  let url = baseUrl + '?screen=' + target;
 
-  if(isSign){
+  document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
+  document.getElementById('shareDesc').textContent = isSign
+    ? '고객에게 아래 링크를 보내면 핸드폰에서 바로 서명할 수 있습니다.'
+    : '고객에게 아래 링크를 보내면 사업자번호+대표자 성함으로 계약서를 조회할 수 있습니다.';
+  document.getElementById('shareNote').textContent = isSign
+    ? '📌 링크를 열면 바로 서명 화면으로 이동합니다'
+    : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
+
+  if(isSign && db){
     const fields=[
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
@@ -625,24 +634,32 @@ function shareScreen(target){
       'qty_qr','price_qr','mgt_qr','type_qr',
       'qty_card','price_card','mgt_card','type_card'
     ];
-    const params = new URLSearchParams();
-    params.set('screen','customer');
+    const data = {};
     fields.forEach(id => {
       const el = document.getElementById(id);
-      if(el && el.value) params.set(id, el.value);
+      if(el && el.value) data[id] = el.value;
     });
-    url = baseUrl + '?' + params.toString();
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    db.ref('tempForms/' + code).set({ data, ts: Date.now() })
+      .then(() => {
+        const url = baseUrl + '?ref=' + code;
+        document.getElementById('shareLinkInput').value = url;
+        document.getElementById('shareModal').classList.add('open');
+      })
+      .catch(err => {
+        console.error('tempForms 저장 실패:', err);
+        // fallback to URL params
+        const params = new URLSearchParams();
+        params.set('screen','customer');
+        fields.forEach(id => { if(data[id]) params.set(id, data[id]); });
+        document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
+        document.getElementById('shareModal').classList.add('open');
+      });
+  } else {
+    const url = baseUrl + '?screen=' + target;
+    document.getElementById('shareLinkInput').value = url;
+    document.getElementById('shareModal').classList.add('open');
   }
-
-  document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
-  document.getElementById('shareDesc').textContent = isSign
-    ? '고객에게 아래 링크를 보내면 핸드폰에서 바로 서명할 수 있습니다.'
-    : '고객에게 아래 링크를 보내면 사업자번호+대표자 성함으로 계약서를 조회할 수 있습니다.';
-  document.getElementById('shareNote').textContent = isSign
-    ? '📌 링크를 열면 바로 서명 화면으로 이동합니다'
-    : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
-  document.getElementById('shareLinkInput').value = url;
-  document.getElementById('shareModal').classList.add('open');
 }
 
 function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
@@ -700,8 +717,34 @@ function shareNative(){
 /* ── 딥링크 ── */
 function checkDeepLink(){
   const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
   const screen = params.get('screen');
 
+  // Firebase tempForms 단축코드 방식
+  if(ref && db){
+    showScreen('customer');
+    db.ref('tempForms/' + ref).once('value').then(snap => {
+      if(!snap.exists()) return;
+      const data = snap.val().data || {};
+      const fields=[
+        'c_company','c_owner','c_bizno','c_tel','c_mobile',
+        'c_email','c_addr','c_bank','c_account','c_depositor',
+        'c_monthly','c_period','c_payday','c_memo',
+        'qty_pos','price_pos','mgt_pos','type_pos',
+        'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
+        'qty_table','price_table','mgt_table','type_table',
+        'qty_qr','price_qr','mgt_qr','type_qr',
+        'qty_card','price_card','mgt_card','type_card'
+      ];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if(el && data[id]) el.value = data[id];
+      });
+    }).catch(err => console.warn('tempForms 로드 실패:', err));
+    return;
+  }
+
+  // URL 파라미터 방식 (fallback)
   if(screen === 'customer' || screen === 'mypage'){
     showScreen(screen);
   }
