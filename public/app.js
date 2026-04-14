@@ -611,7 +611,7 @@ let shareTarget = '';
 function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
-  const baseUrl = window.location.href.split('?')[0].replace(/#.*$/,'');
+  const baseUrl = 'https://daesang-contract.web.app';
   const url = baseUrl + '?screen=' + target;
   document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
   document.getElementById('shareDesc').textContent = isSign
