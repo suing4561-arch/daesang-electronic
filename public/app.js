@@ -611,7 +611,7 @@ let shareTarget = '';
 async function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
-  const baseUrl = 'https://daesang-electronic.pages.dev';
+  const baseUrl = 'https://daesang-contract.web.app';
   let url = baseUrl + '?screen=' + target;
 
   if(isSign && db){
