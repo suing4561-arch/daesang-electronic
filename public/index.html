@@ -499,8 +499,9 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 <div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text" id="loadingText">저장 중...</div></div>
 <div class="toast" id="toast"></div>
 
-<!-- html2pdf -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- PDF 생성 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -1105,60 +1106,66 @@ function buildContractHTML(c){
 }
 
 function printContract(){if(!currentContract)return;document.getElementById('printArea').innerHTML=buildContractHTML(currentContract);closeModal();setTimeout(()=>window.print(),200);}
-function savePDF(){
-  if(!currentContract)return;
-  const c=currentContract;
-  closeModal();
+async function generatePDF(contract) {
+  if(!contract) { showToast('저장된 계약서가 없습니다'); return; }
+  showLoading('PDF 생성 중...');
 
-  const el=document.getElementById('printArea');
-  el.innerHTML=buildContractHTML(c);
-  el.style.display='block';
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = buildContractHTML(contract);
+  printArea.style.display = 'block';
+  printArea.style.position = 'fixed';
+  printArea.style.left = '-9999px';
+  printArea.style.top = '0';
+  printArea.style.width = '794px';
+  printArea.style.background = '#fff';
+  printArea.style.zIndex = '-1';
 
-  const fname=`대상정보통신_계약서_${c.customer.company}_${new Date(c.signedAt).toLocaleDateString('ko-KR').replace(/[\. ]/g,'')}.pdf`;
-  function resetEl(){el.style.display='none';}
-  function fallback(){
-    resetEl();
-    showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');
-    setTimeout(()=>window.print(),200);
-  }
-  if(typeof html2pdf !== 'undefined'){
-    Promise.all([
-      document.fonts ? document.fonts.ready : Promise.resolve(),
-      new Promise(r=>setTimeout(r,300))
-    ]).then(()=>{
-      html2pdf().set({
-        margin:[10,10,10,10],
-        filename:fname,
-        image:{type:'jpeg',quality:0.95},
-        html2canvas:{scale:2,useCORS:true,logging:false},
-        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-      }).from(el).outputPdf('blob').then(blob=>{
-        resetEl();
-        const url = URL.createObjectURL(blob);
-        const w = window.open(url, '_blank');
-        if(!w){
-          // 팝업 차단된 경우 직접 다운로드
-          const a = document.createElement('a');
-          a.href = url; a.download = fname;
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }
-        showToast('📄 PDF가 열렸습니다. 브라우저 메뉴에서 저장하세요');
-        setTimeout(()=>URL.revokeObjectURL(url), 30000);
-      }).catch(fallback);
+  await new Promise(r => setTimeout(r, 300));
+
+  try {
+    const canvas = await html2canvas(printArea, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      width: 794,
+      windowWidth: 794
     });
-  } else {
-    fallback();
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const imgH = (canvas.height * pdfW) / canvas.width;
+
+    let yOffset = 0;
+    while(yOffset < imgH) {
+      if(yOffset > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfW, imgH);
+      yOffset += pdfH;
+    }
+
+    const fileName = `계약서_${contract.customer.company}_${new Date().toLocaleDateString('ko-KR').replace(/\./g,'').replace(/ /g,'')}.pdf`;
+    pdf.save(fileName);
+    showToast('✅ PDF가 다운로드됩니다');
+  } catch(e) {
+    console.error('PDF 생성 실패:', e);
+    showToast('❌ PDF 생성 실패. 인쇄 방식으로 저장해주세요');
+    window.print();
+  } finally {
+    printArea.style.display = 'none';
+    printArea.style.position = '';
+    printArea.style.left = '';
+    printArea.style.top = '';
+    printArea.style.width = '';
+    printArea.style.zIndex = '';
+    hideLoading();
   }
 }
-function customerPrint(){
-  if(currentContract){
-    document.getElementById('printArea').innerHTML=buildContractHTML(currentContract);
-    showToast('🖨️ 인쇄 화면에서 "PDF로 저장"을 선택하세요');
-    setTimeout(()=>window.print(),300);
-  } else {
-    showToast('저장된 계약서가 없습니다');
-  }
-}
+
+function savePDF() { generatePDF(currentContract); }
+function customerPrint() { generatePDF(currentContract); }
 
 /* ── 공유 ── */
 let shareTarget = '';
