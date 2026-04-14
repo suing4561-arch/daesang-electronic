@@ -3,7 +3,7 @@
     ".read": false,
     ".write": false,
     "contracts": {
-      ".read": "auth != null",
+      ".read": true,
       ".write": true
     },
     "trash": {

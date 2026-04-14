@@ -905,22 +905,20 @@ function mypageLogin(){
     renderMypageList(contracts);
   }
   showLoading('계약서 조회 중...');
+  const filterFn = c =>
+    c.customer.bizno.replace(/-/g,'')===bizno.replace(/-/g,'') &&
+    c.customer.owner===owner;
   if(db){
     db.ref('contracts').orderByChild('signedAt').once('value', snap => {
       const data = snap.val();
       const all = data ? Object.values(data) : [];
-      const contracts = all.filter(c=>
-        c.customer.bizno.replace(/-/g,'')===bizno.replace(/-/g,'')&&
-        c.customer.owner===owner
-      );
-      showMypageResult(contracts);
+      showMypageResult(all.filter(filterFn));
+    }, () => {
+      // 권한 없으면 로컬 캐시로 대체
+      showMypageResult(getContracts().filter(filterFn));
     });
   } else {
-    const cached=getContracts().filter(c=>
-      c.customer.bizno.replace(/-/g,'')===bizno.replace(/-/g,'')&&
-      c.customer.owner===owner
-    );
-    showMypageResult(cached);
+    showMypageResult(getContracts().filter(filterFn));
   }
 }
 
@@ -1389,11 +1387,6 @@ window.addEventListener('load', () => {
   /* 성공 화면 */
   document.getElementById('btn-view-mycontract').addEventListener('click', () => {
     showScreen('mypage');
-    if(currentContract){
-      document.getElementById('my_bizno').value = currentContract.customer.bizno||'';
-      document.getElementById('my_owner').value = currentContract.customer.owner||'';
-      mypageLogin();
-    }
   });
 
   /* 관리자 화면 */
