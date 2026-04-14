@@ -652,7 +652,6 @@ function shareKakao(){
 }
 
 function shareSMS(){
-  const url = document.getElementById('shareLinkInput').value;
   const isSign = shareTarget === 'customer';
   const text = isSign
     ? '[대상정보통신] 전자서명 계약서 서명 링크입니다. 아래 링크를 눌러 서명해 주세요.'
