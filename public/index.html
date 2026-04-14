@@ -347,7 +347,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
     <h2 class="success-title">서명이 완료되었습니다</h2>
     <p class="success-sub">계약서가 성공적으로 저장되었습니다.<br>아래 버튼으로 내 계약서를 확인하세요.</p>
     <div style="margin-top:32px;width:100%;max-width:320px;">
-      <button id="btn-view-mycontract" style="width:100%;padding:16px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;">📋 내 계약서 확인하기</button>
+      <button id="btn-view-mycontract" style="width:100%;padding:16px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;">📄 PDF로 저장하기</button>
     </div>
     <p style="margin-top:24px;font-size:11px;color:rgba(255,255,255,.3);line-height:1.6;">담당자가 별도로 연락드릴 예정입니다</p>
   </div>
@@ -1361,12 +1361,7 @@ window.addEventListener('load', () => {
 
   /* 성공 화면 */
   document.getElementById('btn-view-mycontract').addEventListener('click', () => {
-    showScreen('mypage');
-    if(currentContract){
-      document.getElementById('my_bizno').value = currentContract.customer.bizno||'';
-      document.getElementById('my_owner').value = currentContract.customer.owner||'';
-      mypageLogin();
-    }
+    savePDF();
   });
 
   /* 관리자 화면 */
