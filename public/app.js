@@ -619,11 +619,15 @@ function shareScreen(target){
   document.getElementById('shareDesc').textContent = isSign
     ? '고객에게 아래 링크를 보내면 핸드폰에서 바로 서명할 수 있습니다.'
     : '고객에게 아래 링크를 보내면 사업자번호+대표자 성함으로 계약서를 조회할 수 있습니다.';
-  document.getElementById('shareNote').textContent = isSign
-    ? '📌 링크를 열면 바로 서명 화면으로 이동합니다'
-    : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
 
-  if(isSign){
+  const shareNote = document.getElementById('shareNote');
+  if (shareNote) {
+    shareNote.textContent = isSign
+      ? '📌 링크를 열면 바로 서명 화면으로 이동합니다'
+      : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
+  }
+
+  if (isSign) {
     const fields = [
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
@@ -645,13 +649,15 @@ function shareScreen(target){
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       db.ref('tempForms/' + code).set({ data, ts: Date.now() })
         .then(() => {
-          document.getElementById('shareLinkInput').value = baseUrl + '?ref=' + code + '&screen=customer';
+          document.getElementById('shareLinkInput').value = baseUrl + '?ref=' + code;
           document.getElementById('shareModal').classList.add('open');
         })
         .catch(() => {
           const params = new URLSearchParams();
           params.set('screen', 'customer');
-          fields.forEach(id => { if (data[id]) params.set(id, data[id]); });
+          fields.forEach(id => {
+            if (data[id]) params.set(id, data[id]);
+          });
           document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
           document.getElementById('shareModal').classList.add('open');
         });
@@ -660,7 +666,9 @@ function shareScreen(target){
 
     const params = new URLSearchParams();
     params.set('screen', 'customer');
-    fields.forEach(id => { if (data[id]) params.set(id, data[id]); });
+    fields.forEach(id => {
+      if (data[id]) params.set(id, data[id]);
+    });
     document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
     document.getElementById('shareModal').classList.add('open');
     return;
@@ -734,14 +742,25 @@ function checkDeepLink(){
     if (db) {
       db.ref('tempForms/' + ref).once('value').then(snap => {
         if (!snap.exists()) return;
+
         const data = snap.val().data || {};
-        Object.keys(data).forEach(id => {
+        const fields = [
+          'c_company','c_owner','c_bizno','c_tel','c_mobile',
+          'c_email','c_addr','c_bank','c_account','c_depositor',
+          'c_monthly','c_period','c_payday','c_memo',
+          'qty_pos','price_pos','mgt_pos',
+          'qty_kiosk','price_kiosk','mgt_kiosk',
+          'qty_table','price_table','mgt_table',
+          'qty_qr','price_qr','mgt_qr',
+          'qty_card','price_card','mgt_card'
+        ];
+
+        fields.forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.value = data[id];
+          if (el && data[id] !== undefined) el.value = data[id];
         });
       });
     }
-
     return;
   }
 
@@ -750,7 +769,7 @@ function checkDeepLink(){
   }
 
   if (screen === 'customer') {
-    [
+    const fields = [
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
       'c_monthly','c_period','c_payday','c_memo',
@@ -759,7 +778,9 @@ function checkDeepLink(){
       'qty_table','price_table','mgt_table',
       'qty_qr','price_qr','mgt_qr',
       'qty_card','price_card','mgt_card'
-    ].forEach(id => {
+    ];
+
+    fields.forEach(id => {
       const el = document.getElementById(id);
       const val = params.get(id);
       if (el && val !== null) el.value = val;
