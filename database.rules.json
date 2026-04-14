@@ -1,5 +1,7 @@
 {
   "rules": {
+    ".read": false,
+    ".write": false,
     "contracts": {
       ".read": "auth != null",
       ".write": "auth != null"
@@ -10,7 +12,11 @@
     },
     "tempForms": {
       ".read": true,
-      ".write": true
+      ".write": true,
+      "$formId": {
+        ".read": true,
+        ".write": true
+      }
     }
   }
 }
