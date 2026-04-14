@@ -1429,29 +1429,12 @@ let shareTarget = '';
 function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
-  const baseUrl = 'https://daesang-contract.web.app';
-  let fullUrl = baseUrl + '?screen=' + target;
-  if(isSign){
-    const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr',
-      'c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo',
-      'qty_pos','price_pos','mgt_pos','type_pos',
-      'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
-      'qty_table','price_table','mgt_table','type_table',
-      'qty_qr','price_qr','mgt_qr','type_qr',
-      'qty_card','price_card','mgt_card','type_card'];
-    const params=new URLSearchParams();
-    params.set('screen','customer');
-    fields.forEach(id=>{
-      const el=document.getElementById(id);
-      if(el&&el.value) params.set(id,el.value);
-    });
-    fullUrl=baseUrl+'?'+params.toString();
-  }
+  const url = 'https://daesang-contract.web.app?screen=' + target;
   document.getElementById('shareNote').textContent = isSign
     ? '고객이 링크를 열면 바로 서명 화면으로 이동합니다'
     : '고객이 링크를 열면 계약서 조회 화면으로 이동합니다';
-  document.getElementById('shareLinkInput').value = fullUrl;
-  document.getElementById('shareLinkDisplay').textContent = baseUrl + '?screen=' + target;
+  document.getElementById('shareLinkInput').value = url;
+  document.getElementById('shareLinkDisplay').textContent = url;
   document.getElementById('shareModal').classList.add('open');
 }
 
