@@ -608,7 +608,7 @@ function customerPrint(){
 /* ── 공유 ── */
 let shareTarget = '';
 
-async function shareScreen(target){
+function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
   const baseUrl = 'https://daesang-contract.web.app';
@@ -619,33 +619,19 @@ async function shareScreen(target){
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
       'c_monthly','c_period','c_payday','c_memo',
-      'qty_pos','price_pos','mgt_pos',
-      'qty_kiosk','price_kiosk','mgt_kiosk',
-      'qty_table','price_table','mgt_table',
-      'qty_qr','price_qr','mgt_qr',
-      'qty_card','price_card','mgt_card'
+      'qty_pos','price_pos','mgt_pos','type_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
+      'qty_table','price_table','mgt_table','type_table',
+      'qty_qr','price_qr','mgt_qr','type_qr',
+      'qty_card','price_card','mgt_card','type_card'
     ];
-    const data = { createdAt: new Date().toISOString() };
-    let hasData = false;
+    const params = new URLSearchParams();
+    params.set('screen','customer');
     fields.forEach(id => {
       const el = document.getElementById(id);
-      if(el && el.value){ data[id] = el.value; hasData = true; }
+      if(el && el.value) params.set(id, el.value);
     });
-    if(hasData && db){
-      try {
-        showLoading('링크 생성 중...');
-        const ref = db.ref('tempForms').push();
-        await ref.set(data);
-        url = baseUrl + '?screen=customer&code=' + ref.key;
-        hideLoading();
-        console.log('tempForms 저장 성공:', ref.key);
-      } catch(e){
-        hideLoading();
-        console.error('tempForms 저장 실패:', e);
-      }
-    } else {
-      console.log('hasData:', hasData, 'db:', db);
-    }
+    url = baseUrl + '?' + params.toString();
   }
 
   document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
@@ -712,35 +698,29 @@ function shareNative(){
 }
 
 /* ── 딥링크 ── */
-async function checkDeepLink(){
+function checkDeepLink(){
   const params = new URLSearchParams(window.location.search);
   const screen = params.get('screen');
-  const code = params.get('code');
 
   if(screen === 'customer' || screen === 'mypage'){
     showScreen(screen);
   }
 
-  if(screen === 'customer' && code && db){
-    try {
-      const snap = await db.ref('tempForms/' + code).once('value');
-      const data = snap.val();
-      if(data){
-        const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile',
-          'c_email','c_addr','c_bank','c_account','c_depositor',
-          'c_monthly','c_period','c_payday','c_memo',
-          'qty_pos','price_pos','mgt_pos',
-          'qty_kiosk','price_kiosk','mgt_kiosk',
-          'qty_table','price_table','mgt_table',
-          'qty_qr','price_qr','mgt_qr',
-          'qty_card','price_card','mgt_card'];
-        fields.forEach(id => {
-          const el = document.getElementById(id);
-          if(el && data[id]) el.value = data[id];
-        });
-        showToast('✅ 담당자가 입력한 정보가 자동으로 불러와졌습니다');
-      }
-    } catch(e){ console.error(e); }
+  if(screen === 'customer'){
+    const fields=[
+      'c_company','c_owner','c_bizno','c_tel','c_mobile',
+      'c_email','c_addr','c_bank','c_account','c_depositor',
+      'c_monthly','c_period','c_payday','c_memo',
+      'qty_pos','price_pos','mgt_pos','type_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
+      'qty_table','price_table','mgt_table','type_table',
+      'qty_qr','price_qr','mgt_qr','type_qr',
+      'qty_card','price_card','mgt_card','type_card'
+    ];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if(el && params.get(id)) el.value = params.get(id);
+    });
   }
 }
 
