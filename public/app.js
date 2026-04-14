@@ -611,7 +611,35 @@ let shareTarget = '';
 async function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
-  const url = 'https://daesang-electronic.pages.dev?screen=' + target;
+  const baseUrl = 'https://daesang-contract.web.app';
+  let url = baseUrl + '?screen=' + target;
+
+  if(isSign){
+    const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile',
+      'c_email','c_addr','c_bank','c_account','c_depositor',
+      'c_monthly','c_period','c_payday','c_memo',
+      'qty_pos','price_pos','mgt_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk',
+      'qty_table','price_table','mgt_table',
+      'qty_qr','price_qr','mgt_qr',
+      'qty_card','price_card','mgt_card'];
+    const data = { createdAt: new Date().toISOString() };
+    let hasData = false;
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if(el && el.value){ data[id] = el.value; hasData = true; }
+    });
+    if(hasData && db){
+      try {
+        showLoading('링크 생성 중...');
+        const ref = db.ref('tempForms').push();
+        await ref.set(data);
+        url = baseUrl + '?screen=customer&code=' + ref.key;
+        hideLoading();
+      } catch(e){ hideLoading(); console.error(e); }
+    }
+  }
+
   document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
   document.getElementById('shareDesc').textContent = isSign
     ? '고객에게 아래 링크를 보내면 핸드폰에서 바로 서명할 수 있습니다.'
