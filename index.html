@@ -1132,7 +1132,7 @@ function openAdminMemo(id, e){
   const c = contracts.find(x=>x.id===id);
   if(!c) return;
   document.getElementById('adminMemoCompanyName').textContent = c.customer.company + ' · ' + c.customer.owner;
-  document.getElementById('adminMemoText').value = c.adminMemo != null ? c.adminMemo : (c.memo || '');
+  document.getElementById('adminMemoText').value = c.adminMemo || '';
   document.getElementById('adminMemoModal').classList.add('open');
 }
 
