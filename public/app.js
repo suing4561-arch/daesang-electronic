@@ -623,8 +623,8 @@ function shareScreen(target){
     ? '📌 링크를 열면 바로 서명 화면으로 이동합니다'
     : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
 
-  if(isSign && db){
-    const fields=[
+  if(isSign){
+    const fields = [
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
       'c_monthly','c_period','c_payday','c_memo',
@@ -634,32 +634,40 @@ function shareScreen(target){
       'qty_qr','price_qr','mgt_qr',
       'qty_card','price_card','mgt_card'
     ];
+
     const data = {};
     fields.forEach(id => {
       const el = document.getElementById(id);
-      if(el && el.value) data[id] = el.value;
+      if (el && el.value) data[id] = el.value;
     });
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    db.ref('tempForms/' + code).set({ data, ts: Date.now() })
-      .then(() => {
-        const url = baseUrl + '?ref=' + code;
-        document.getElementById('shareLinkInput').value = url;
-        document.getElementById('shareModal').classList.add('open');
-      })
-      .catch(err => {
-        console.error('tempForms 저장 실패:', err);
-        // fallback to URL params
-        const params = new URLSearchParams();
-        params.set('screen','customer');
-        fields.forEach(id => { if(data[id]) params.set(id, data[id]); });
-        document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
-        document.getElementById('shareModal').classList.add('open');
-      });
-  } else {
-    const url = baseUrl + '?screen=' + target;
-    document.getElementById('shareLinkInput').value = url;
+
+    if (db) {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      db.ref('tempForms/' + code).set({ data, ts: Date.now() })
+        .then(() => {
+          document.getElementById('shareLinkInput').value = baseUrl + '?ref=' + code + '&screen=customer';
+          document.getElementById('shareModal').classList.add('open');
+        })
+        .catch(() => {
+          const params = new URLSearchParams();
+          params.set('screen', 'customer');
+          fields.forEach(id => { if (data[id]) params.set(id, data[id]); });
+          document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
+          document.getElementById('shareModal').classList.add('open');
+        });
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('screen', 'customer');
+    fields.forEach(id => { if (data[id]) params.set(id, data[id]); });
+    document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
     document.getElementById('shareModal').classList.add('open');
+    return;
   }
+
+  document.getElementById('shareLinkInput').value = baseUrl + '?screen=' + target;
+  document.getElementById('shareModal').classList.add('open');
 }
 
 function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
@@ -720,37 +728,29 @@ function checkDeepLink(){
   const ref = params.get('ref');
   const screen = params.get('screen');
 
-  // Firebase tempForms 단축코드 방식
-  if(ref && db){
+  if (ref) {
     showScreen('customer');
-    db.ref('tempForms/' + ref).once('value').then(snap => {
-      if(!snap.exists()) return;
-      const data = snap.val().data || {};
-      const fields=[
-        'c_company','c_owner','c_bizno','c_tel','c_mobile',
-        'c_email','c_addr','c_bank','c_account','c_depositor',
-        'c_monthly','c_period','c_payday','c_memo',
-        'qty_pos','price_pos','mgt_pos',
-        'qty_kiosk','price_kiosk','mgt_kiosk',
-        'qty_table','price_table','mgt_table',
-        'qty_qr','price_qr','mgt_qr',
-        'qty_card','price_card','mgt_card'
-      ];
-      fields.forEach(id => {
-        const el = document.getElementById(id);
-        if(el && data[id]) el.value = data[id];
+
+    if (db) {
+      db.ref('tempForms/' + ref).once('value').then(snap => {
+        if (!snap.exists()) return;
+        const data = snap.val().data || {};
+        Object.keys(data).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = data[id];
+        });
       });
-    }).catch(err => console.warn('tempForms 로드 실패:', err));
+    }
+
     return;
   }
 
-  // URL 파라미터 방식 (fallback)
-  if(screen === 'customer' || screen === 'mypage'){
+  if (screen === 'customer' || screen === 'mypage') {
     showScreen(screen);
   }
 
-  if(screen === 'customer'){
-    const fields=[
+  if (screen === 'customer') {
+    [
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
       'c_monthly','c_period','c_payday','c_memo',
@@ -759,10 +759,10 @@ function checkDeepLink(){
       'qty_table','price_table','mgt_table',
       'qty_qr','price_qr','mgt_qr',
       'qty_card','price_card','mgt_card'
-    ];
-    fields.forEach(id => {
+    ].forEach(id => {
       const el = document.getElementById(id);
-      if(el && params.get(id)) el.value = params.get(id);
+      const val = params.get(id);
+      if (el && val !== null) el.value = val;
     });
   }
 }
