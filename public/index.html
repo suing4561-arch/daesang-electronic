@@ -1126,25 +1126,24 @@ function savePDF(){
       document.fonts ? document.fonts.ready : Promise.resolve(),
       new Promise(r=>setTimeout(r,300))
     ]).then(()=>{
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       html2pdf().set({
         margin:[10,10,10,10],
         filename:fname,
         image:{type:'jpeg',quality:0.95},
         html2canvas:{scale:2,useCORS:true,logging:false},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-      }).from(el).outputPdf('datauristring').then(dataUri=>{
+      }).from(el).outputPdf('blob').then(blob=>{
         resetEl();
-        if(isIOS){
-          const w = window.open();
-          if(w){ w.document.write('<iframe src="'+dataUri+'" style="width:100%;height:100%;border:none;"></iframe>'); }
-          showToast('📄 PDF가 열렸습니다. 공유(□↑) 버튼으로 저장하세요');
-        } else {
+        const url = URL.createObjectURL(blob);
+        const w = window.open(url, '_blank');
+        if(!w){
+          // 팝업 차단된 경우 직접 다운로드
           const a = document.createElement('a');
-          a.href = dataUri; a.download = fname;
+          a.href = url; a.download = fname;
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          showToast('✅ PDF 저장 완료 — 다운로드 폴더를 확인하세요');
         }
+        showToast('📄 PDF가 열렸습니다. 브라우저 메뉴에서 저장하세요');
+        setTimeout(()=>URL.revokeObjectURL(url), 30000);
       }).catch(fallback);
     });
   } else {
