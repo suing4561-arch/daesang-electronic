@@ -628,11 +628,11 @@ function shareScreen(target){
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
       'c_monthly','c_period','c_payday','c_memo',
-      'qty_pos','price_pos','mgt_pos','type_pos',
-      'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
-      'qty_table','price_table','mgt_table','type_table',
-      'qty_qr','price_qr','mgt_qr','type_qr',
-      'qty_card','price_card','mgt_card','type_card'
+      'qty_pos','price_pos','mgt_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk',
+      'qty_table','price_table','mgt_table',
+      'qty_qr','price_qr','mgt_qr',
+      'qty_card','price_card','mgt_card'
     ];
     const data = {};
     fields.forEach(id => {
@@ -730,11 +730,11 @@ function checkDeepLink(){
         'c_company','c_owner','c_bizno','c_tel','c_mobile',
         'c_email','c_addr','c_bank','c_account','c_depositor',
         'c_monthly','c_period','c_payday','c_memo',
-        'qty_pos','price_pos','mgt_pos','type_pos',
-        'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
-        'qty_table','price_table','mgt_table','type_table',
-        'qty_qr','price_qr','mgt_qr','type_qr',
-        'qty_card','price_card','mgt_card','type_card'
+        'qty_pos','price_pos','mgt_pos',
+        'qty_kiosk','price_kiosk','mgt_kiosk',
+        'qty_table','price_table','mgt_table',
+        'qty_qr','price_qr','mgt_qr',
+        'qty_card','price_card','mgt_card'
       ];
       fields.forEach(id => {
         const el = document.getElementById(id);
@@ -754,11 +754,11 @@ function checkDeepLink(){
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
       'c_monthly','c_period','c_payday','c_memo',
-      'qty_pos','price_pos','mgt_pos','type_pos',
-      'qty_kiosk','price_kiosk','mgt_kiosk','type_kiosk',
-      'qty_table','price_table','mgt_table','type_table',
-      'qty_qr','price_qr','mgt_qr','type_qr',
-      'qty_card','price_card','mgt_card','type_card'
+      'qty_pos','price_pos','mgt_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk',
+      'qty_table','price_table','mgt_table',
+      'qty_qr','price_qr','mgt_qr',
+      'qty_card','price_card','mgt_card'
     ];
     fields.forEach(id => {
       const el = document.getElementById(id);
