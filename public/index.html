@@ -1132,8 +1132,21 @@ function savePDF(){
         image:{type:'jpeg',quality:0.95},
         html2canvas:{scale:2,useCORS:true,logging:false},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-      }).from(el).save().then(()=>{
-        resetEl();showToast('✅ PDF가 저장되었습니다');
+      }).from(el).outputPdf('blob').then(blob=>{
+        resetEl();
+        const url = URL.createObjectURL(blob);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if(isIOS){
+          // iOS Safari는 download 속성 미지원 → 새 탭으로 열기
+          window.open(url, '_blank');
+          showToast('📄 PDF가 열렸습니다. 공유(□↑) 버튼으로 저장하세요');
+        } else {
+          const a = document.createElement('a');
+          a.href = url; a.download = fname;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(()=>URL.revokeObjectURL(url), 1000);
+          showToast('✅ PDF가 다운로드됩니다 (다운로드 폴더 확인)');
+        }
       }).catch(fallback);
     });
   } else {
