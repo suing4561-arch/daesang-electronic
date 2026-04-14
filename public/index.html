@@ -1147,8 +1147,18 @@ async function generatePDF(contract) {
     }
 
     const fileName = `계약서_${contract.customer.company}_${new Date().toLocaleDateString('ko-KR').replace(/\./g,'').replace(/ /g,'')}.pdf`;
-    pdf.save(fileName);
-    showToast('✅ PDF가 다운로드됩니다');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if(isIOS){
+      // iOS Safari: blob을 새 탭으로 열어 공유 버튼으로 저장
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      showToast('📄 PDF가 열렸습니다. 하단 공유(□↑) 버튼 → 파일에 저장');
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    } else {
+      pdf.save(fileName);
+      showToast('✅ PDF가 다운로드됩니다');
+    }
   } catch(e) {
     console.error('PDF 생성 실패:', e);
     showToast('❌ PDF 생성 실패. 인쇄 방식으로 저장해주세요');
