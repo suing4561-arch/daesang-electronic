@@ -1156,7 +1156,7 @@ let shareTarget = '';
 function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
-  const baseUrl = window.location.href.split('?')[0].replace(/#.*$/,'');
+  const baseUrl = 'https://daesang-contract.web.app';
   let url = baseUrl + '?screen=' + target;
   if(isSign){
     const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr',

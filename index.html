@@ -128,6 +128,9 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 .status-done{background:rgba(0,200,150,.12);color:var(--accent-dim);}
 .status-warn{background:#FEF3C7;color:#92400E;}
 .contract-arrow{color:var(--gray4);font-size:18px;}
+.memo-btn{background:none;border:1.5px solid var(--gray3);border-radius:8px;padding:4px 7px;font-size:15px;cursor:pointer;color:var(--gray4);transition:all .2s;flex-shrink:0;}
+.memo-btn:hover{border-color:var(--blue);color:var(--blue);}
+.memo-btn.has-memo{border-color:#F59E0B;color:#F59E0B;background:#FFFBEB;}
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(10,22,40,.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;}
 .modal-overlay.open{display:flex;}
@@ -517,6 +520,27 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
   </div>
 </div>
 
+<!-- ═══ ADMIN MEMO MODAL ═══ -->
+<div class="modal-overlay" id="adminMemoModal">
+  <div class="modal-box" style="border-radius:var(--radius);max-width:480px;margin:0 16px;">
+    <div class="modal-head" style="padding:16px 20px;">
+      <div>
+        <div class="modal-title">📝 관리자 메모</div>
+        <div id="adminMemoCompanyName" style="font-size:12px;color:var(--gray4);margin-top:2px;"></div>
+      </div>
+      <button id="btn-admin-memo-close" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px 20px;">
+      <div style="font-size:12px;color:var(--gray5);margin-bottom:8px;">변동사항, 특이사항, 가맹점 관련 메모를 기록하세요.</div>
+      <textarea id="adminMemoText" style="width:100%;min-height:160px;padding:12px;border:1.5px solid var(--gray3);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;line-height:1.6;" placeholder="예) 2024.04 단말기 교체, 연락처 변경됨, 특이 요청사항 등..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button id="btn-admin-memo-cancel" class="action-btn" style="background:var(--gray2);color:var(--gray6);">취소</button>
+        <button id="btn-admin-memo-save" class="action-btn" style="background:var(--blue);color:#fff;">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="printArea"></div>
 <div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text" id="loadingText">저장 중...</div></div>
 <div class="toast" id="toast"></div>
@@ -824,6 +848,7 @@ function renderContractList(contracts,listId,showActions){
         <div class="contract-meta" style="color:${isExpiring?'#92400E':'var(--gray5)'}">만기: ${expStr}${isExpiring?` (D-${daysLeft})`:''}</div>
       </div>
       <span class="contract-status ${isExpiring?'status-warn':'status-done'}">${isExpiring?'만기임박':'서명완료'}</span>
+      ${showActions?`<button class="memo-btn${c.adminMemo?' has-memo':''}" onclick="openAdminMemo('${c.id}',event)" title="${c.adminMemo?'메모 있음 - 클릭하여 수정':'메모 추가'}">📝</button>`:''}
       <span class="contract-arrow">›</span>
     </div>`;
   }).join('');
@@ -1072,7 +1097,9 @@ function openDetail(id,showActions){
     <div class="detail-section">
       <div class="detail-section-title">전자서명</div>
       <div class="sig-preview"><img src="${c.signature}" alt="서명"/></div>
-    </div>`;
+    </div>
+    ${c.adminMemo?`<div class="detail-section"><div class="detail-section-title">📝 관리자 메모</div><div style="font-size:13px;white-space:pre-wrap;color:var(--gray6);line-height:1.7;">${c.adminMemo}</div></div>`:''}
+    `;
 
   const printBtn = document.getElementById('btn-modal-print');
   const emailBtn = document.getElementById('btn-modal-email');
@@ -1089,6 +1116,41 @@ function openDetail(id,showActions){
   document.getElementById('detailModal').classList.add('open');
 }
 function closeModal(){document.getElementById('detailModal').classList.remove('open');}
+
+/* ── 관리자 메모 ── */
+let adminMemoTargetId = '';
+
+function openAdminMemo(id, e){
+  e.stopPropagation();
+  adminMemoTargetId = id;
+  const contracts = getContracts();
+  const c = contracts.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('adminMemoCompanyName').textContent = c.customer.company + ' · ' + c.customer.owner;
+  document.getElementById('adminMemoText').value = c.adminMemo != null ? c.adminMemo : (c.memo || '');
+  document.getElementById('adminMemoModal').classList.add('open');
+}
+
+function closeAdminMemoModal(){
+  document.getElementById('adminMemoModal').classList.remove('open');
+  adminMemoTargetId = '';
+}
+
+function saveAdminMemo(){
+  const memo = document.getElementById('adminMemoText').value.trim();
+  if(!adminMemoTargetId) return;
+  const contracts = getContracts();
+  const idx = contracts.findIndex(c=>c.id===adminMemoTargetId);
+  if(idx < 0) return;
+  contracts[idx].adminMemo = memo;
+  saveContractsCache(contracts);
+  if(db){
+    db.ref('contracts/'+adminMemoTargetId+'/adminMemo').set(memo).catch(e=>console.error(e));
+  }
+  closeAdminMemoModal();
+  renderAdminStats(contracts);
+  showToast(memo ? '📝 메모가 저장되었습니다' : '메모가 삭제되었습니다');
+}
 
 /* ── 고객 포털 ── */
 function mypageLogin(){
@@ -1362,7 +1424,7 @@ let shareTarget = '';
 function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
-  const baseUrl = window.location.href.split('?')[0].replace(/#.*$/,'');
+  const baseUrl = 'https://daesang-contract.web.app';
   let url = baseUrl + '?screen=' + target;
   if(isSign){
     const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr',
@@ -1598,6 +1660,12 @@ window.addEventListener('load', () => {
   document.getElementById('btn-share-kakao').addEventListener('click', shareKakao);
   document.getElementById('btn-share-sms').addEventListener('click', shareSMS);
   document.getElementById('btn-share-native').addEventListener('click', shareNative);
+
+  /* 관리자 메모 모달 */
+  document.getElementById('adminMemoModal').addEventListener('click', function(e){ if(e.target===this) closeAdminMemoModal(); });
+  document.getElementById('btn-admin-memo-close').addEventListener('click', closeAdminMemoModal);
+  document.getElementById('btn-admin-memo-cancel').addEventListener('click', closeAdminMemoModal);
+  document.getElementById('btn-admin-memo-save').addEventListener('click', saveAdminMemo);
 });
 </script>
 </body>
