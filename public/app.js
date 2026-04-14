@@ -627,7 +627,7 @@ function shareScreen(target){
       : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
   }
 
-  if (isSign) {
+  if (db && isSign) {
     const fields = [
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
@@ -645,37 +645,45 @@ function shareScreen(target){
       if (el && el.value) data[id] = el.value;
     });
 
-    if (db) {
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      db.ref('tempForms/' + code).set({ data, ts: Date.now() })
-        .then(() => {
-          document.getElementById('shareLinkInput').value = baseUrl + '?ref=' + code;
-          document.getElementById('shareModal').classList.add('open');
-        })
-        .catch(() => {
-          const params = new URLSearchParams();
-          params.set('screen', 'customer');
-          fields.forEach(id => {
-            if (data[id]) params.set(id, data[id]);
-          });
-          document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
-          document.getElementById('shareModal').classList.add('open');
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    db.ref('tempForms/' + code).set({ data, ts: Date.now() })
+      .then(() => {
+        document.getElementById('shareLinkInput').value = baseUrl + '?ref=' + code;
+        document.getElementById('shareModal').classList.add('open');
+      })
+      .catch(() => {
+        const params = new URLSearchParams();
+        params.set('screen', target);
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.value) params.set(id, el.value);
         });
-      return;
-    }
-
+        document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
+        document.getElementById('shareModal').classList.add('open');
+      });
+  } else {
     const params = new URLSearchParams();
-    params.set('screen', 'customer');
-    fields.forEach(id => {
-      if (data[id]) params.set(id, data[id]);
-    });
-    document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
+    params.set('screen', target);
+    if (isSign) {
+      const fields = [
+        'c_company','c_owner','c_bizno','c_tel','c_mobile',
+        'c_email','c_addr','c_bank','c_account','c_depositor',
+        'c_monthly','c_period','c_payday','c_memo',
+        'qty_pos','price_pos','mgt_pos',
+        'qty_kiosk','price_kiosk','mgt_kiosk',
+        'qty_table','price_table','mgt_table',
+        'qty_qr','price_qr','mgt_qr',
+        'qty_card','price_card','mgt_card'
+      ];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.value) params.set(id, el.value);
+      });
+    }
+    const url = baseUrl + '?' + params.toString();
+    document.getElementById('shareLinkInput').value = url;
     document.getElementById('shareModal').classList.add('open');
-    return;
   }
-
-  document.getElementById('shareLinkInput').value = baseUrl + '?screen=' + target;
-  document.getElementById('shareModal').classList.add('open');
 }
 
 function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
