@@ -253,7 +253,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="section-head"><span class="num">2</span> 고객(乙) 정보</div>
       <div class="section-body">
         <div class="info-grid">
-          <div class="info-item full"><span class="info-label">상호명 *</span><input class="info-input" id="c_company" placeholder="예) 메밀상회"/></div>
+          <div class="info-item full"><span class="info-label">상호명 *</span><input class="info-input" id="c_company" placeholder="상호명 입력"/></div>
           <div class="info-item"><span class="info-label">대표자명 *</span><input class="info-input" id="c_owner" placeholder="이름"/></div>
           <div class="info-item"><span class="info-label">사업자번호 *</span><input class="info-input" id="c_bizno" placeholder="000-00-00000"/></div>
           <div class="info-item"><span class="info-label">사업장 전화</span><input class="info-input" id="c_tel" placeholder="051-000-0000"/></div>
@@ -272,11 +272,11 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
             <tr><th>제품명</th><th>수량</th><th>금액(원)</th><th>형태</th><th>관리비</th></tr>
           </thead>
           <tbody>
-            <tr><td>POS</td><td><input class="tinput" id="qty_pos" value="1"/></td><td><input class="pinput" id="price_pos" placeholder="0"/></td><td><select class="type-select" id="type_pos"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_pos" placeholder="0"/></td></tr>
-            <tr><td>키오스크</td><td><input class="tinput" id="qty_kiosk" value="1"/></td><td><input class="pinput" id="price_kiosk" placeholder="0"/></td><td><select class="type-select" id="type_kiosk"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_kiosk" placeholder="0"/></td></tr>
-            <tr><td>테이블오더</td><td><input class="tinput" id="qty_table" value="1"/></td><td><input class="pinput" id="price_table" placeholder="0"/></td><td><select class="type-select" id="type_table"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_table" placeholder="0"/></td></tr>
-            <tr><td>QR오더</td><td><input class="tinput" id="qty_qr" value="30"/></td><td><input class="pinput" id="price_qr" placeholder="0"/></td><td><select class="type-select" id="type_qr"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_qr" value="45,000"/></td></tr>
-            <tr><td>카드단말기</td><td><input class="tinput" id="qty_card" value="1"/></td><td><input class="pinput" id="price_card" placeholder="0"/></td><td><select class="type-select" id="type_card"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_card" placeholder="0"/></td></tr>
+            <tr><td>POS</td><td><input class="tinput" id="qty_pos"/></td><td><input class="pinput" id="price_pos" placeholder="0"/></td><td><select class="type-select" id="type_pos"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_pos" placeholder="0"/></td></tr>
+            <tr><td>키오스크</td><td><input class="tinput" id="qty_kiosk"/></td><td><input class="pinput" id="price_kiosk" placeholder="0"/></td><td><select class="type-select" id="type_kiosk"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_kiosk" placeholder="0"/></td></tr>
+            <tr><td>테이블오더</td><td><input class="tinput" id="qty_table"/></td><td><input class="pinput" id="price_table" placeholder="0"/></td><td><select class="type-select" id="type_table"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_table" placeholder="0"/></td></tr>
+            <tr><td>QR오더</td><td><input class="tinput" id="qty_qr"/></td><td><input class="pinput" id="price_qr" placeholder="0"/></td><td><select class="type-select" id="type_qr"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_qr" placeholder="0"/></td></tr>
+            <tr><td>카드단말기</td><td><input class="tinput" id="qty_card"/></td><td><input class="pinput" id="price_card" placeholder="0"/></td><td><select class="type-select" id="type_card"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_card" placeholder="0"/></td></tr>
           </tbody>
         </table>
         <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -1453,13 +1453,18 @@ function shareScreen(target){
 function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
 
 function copyLink(){
-  const input = document.getElementById('shareLinkInput');
-  input.select();
+  const url = document.getElementById('shareLinkInput').value;
+  const isSign = shareTarget === 'customer';
+  const text = isSign
+    ? '[대상정보통신] 전자서명 계약서 서명 요청\n아래 링크를 클릭하여 계약서에 서명해 주세요.\n\n' + url
+    : '[대상정보통신] 계약서 조회\n아래 링크에서 사업자번호+대표자 성함으로 계약서를 확인하세요.\n\n' + url;
   try {
-    navigator.clipboard.writeText(input.value).then(()=>showToast('✅ 링크가 복사되었습니다!'));
+    navigator.clipboard.writeText(text).then(()=>showToast('✅ 복사되었습니다!'));
   } catch(e){
-    document.execCommand('copy');
-    showToast('✅ 링크가 복사되었습니다!');
+    const el=document.createElement('textarea');
+    el.value=text;document.body.appendChild(el);el.select();
+    document.execCommand('copy');document.body.removeChild(el);
+    showToast('✅ 복사되었습니다!');
   }
 }
 
