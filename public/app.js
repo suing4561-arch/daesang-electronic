@@ -611,10 +611,10 @@ let shareTarget = '';
 async function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
-  const baseUrl = 'https://daesang-contract.web.app';
+  const baseUrl = 'https://daesang-electronic.pages.dev';
   let url = baseUrl + '?screen=' + target;
 
-  if(isSign){
+  if(isSign && db){
     const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
       'c_monthly','c_period','c_payday','c_memo',
@@ -629,14 +629,17 @@ async function shareScreen(target){
       const el = document.getElementById(id);
       if(el && el.value){ data[id] = el.value; hasData = true; }
     });
-    if(hasData && db){
+    if(hasData){
       try {
         showLoading('링크 생성 중...');
         const ref = db.ref('tempForms').push();
         await ref.set(data);
         url = baseUrl + '?screen=customer&code=' + ref.key;
         hideLoading();
-      } catch(e){ hideLoading(); console.error(e); }
+      } catch(e){
+        hideLoading();
+        console.error('tempForms 저장 실패:', e);
+      }
     }
   }
 
