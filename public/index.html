@@ -529,6 +529,7 @@ try {
 const ADMIN_PW = '1234';
 const STORAGE_KEY = 'daesang_contracts';
 let currentContract = null;
+let currentRef = null;
 
 /* ── 로컬스토리지 ── */
 function getContracts(){
@@ -656,6 +657,7 @@ async function submitContract(){
   try {
     if(db){
       await db.ref('contracts/' + contract.id).set(contract);
+      if(currentRef) db.ref('tempForms/' + currentRef + '/signed').set(true);
     }
   } catch(e){ console.error('Firebase 저장 실패:', e); }
   const list=getContracts();list.unshift(contract);saveContractsCache(list);
@@ -1310,11 +1312,18 @@ function checkDeepLink(){
   };
 
   if (ref) {
-    showScreen('customer');
+    currentRef = ref;
     if (db) {
       db.ref('tempForms/'+ref).once('value').then(snap=>{
-        if(!snap.exists()) return;
-        const data = snap.val().data || {};
+        if(!snap.exists()){ showScreen('customer'); return; }
+        const val = snap.val();
+        // 이미 서명된 링크면 mypage로 이동
+        if(val.signed){
+          showScreen('mypage');
+          return;
+        }
+        const data = val.data || {};
+        showScreen('customer');
         ['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr','c_bank','c_account','c_depositor',
          'c_monthly','c_period','c_payday','c_memo','qty_pos','price_pos','mgt_pos',
          'qty_kiosk','price_kiosk','mgt_kiosk','qty_table','price_table','mgt_table',
@@ -1323,6 +1332,8 @@ function checkDeepLink(){
         if(data.c_owner){const nd=document.getElementById('sigNameDisplay');if(nd)nd.textContent=data.c_owner;}
         lockFields(data.c_company);
       });
+    } else {
+      showScreen('customer');
     }
     return;
   }
