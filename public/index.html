@@ -566,6 +566,8 @@ function showScreen(id){
   if(id==='admin'){
     document.getElementById('adminLogin').style.display='flex';
     document.getElementById('adminDash').style.display='none';
+    document.getElementById('adminEmail').value='';
+    document.getElementById('adminPw').value='';
   }
   if(id==='mypage'){
     document.getElementById('mypageLogin').style.display='block';
@@ -1330,10 +1332,10 @@ function checkDeepLink(){
     if (!company) return;
     const shareBtn=document.getElementById('btn-share-customer');
     if(shareBtn) shareBtn.style.display='none';
-    document.querySelectorAll('#customer input[type=text],#customer input[type=tel],#customer input[type=email],#customer input:not([type=checkbox]):not([type=submit])').forEach(el=>{
+    document.querySelectorAll('#customerForm input[type=text],#customerForm input[type=tel],#customerForm input[type=email],#customerForm input:not([type=checkbox]):not([type=submit])').forEach(el=>{
       el.readOnly=true; el.style.background='#f8fafc'; el.style.color='#64748b'; el.style.cursor='not-allowed';
     });
-    document.querySelectorAll('#customer select,#customer textarea').forEach(el=>{
+    document.querySelectorAll('#customerForm select,#customerForm textarea').forEach(el=>{
       el.disabled=true; el.style.background='#f8fafc'; el.style.color='#64748b'; el.style.cursor='not-allowed'; el.style.pointerEvents='none';
     });
   };
