@@ -234,6 +234,17 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <button id="btn-home-from-customer" class="nav-btn">← 홈</button>
     </div>
   </div>
+  <div id="customerLogin" class="admin-login">
+    <div class="login-card">
+      <div class="login-logo">✍️</div>
+      <h2 class="login-title">신규 계약 서명</h2>
+      <p class="login-sub">담당자 확인 후 계약서 작성 가능합니다</p>
+      <input class="login-input" type="email" id="customerEmail" placeholder="이메일 입력"/>
+      <input class="login-input" type="password" id="customerPw" placeholder="비밀번호 입력"/>
+      <button id="btn-customer-login" class="login-btn">확인</button>
+    </div>
+  </div>
+  <div id="customerForm" style="display:none;">
   <div class="contract-wrap">
 
     <div class="section-card">
@@ -337,6 +348,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
     </div>
 
     <button id="btn-submit" class="submit-btn">서명 완료 · 계약서 제출하기 →</button>
+  </div>
   </div>
 </div>
 
@@ -527,6 +539,7 @@ try {
 
 /* ── 상수 / 상태 ── */
 const ADMIN_PW = '1234';
+const CUSTOMER_PW = '1234';
 const STORAGE_KEY = 'daesang_contracts';
 let currentContract = null;
 let currentRef = null;
@@ -544,6 +557,12 @@ function saveContractsCache(l){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if(id==='customer'){
+    document.getElementById('customerLogin').style.display='flex';
+    document.getElementById('customerForm').style.display='none';
+    document.getElementById('customerEmail').value='';
+    document.getElementById('customerPw').value='';
+  }
   if(id==='admin'){
     document.getElementById('adminLogin').style.display='flex';
     document.getElementById('adminDash').style.display='none';
@@ -665,6 +684,14 @@ async function submitContract(){
   hideLoading();showScreen('success');
 }
 function v(id){return(document.getElementById(id)||{}).value||'';}
+
+/* ── 신규계약 로그인 ── */
+function checkCustomerLogin(){
+  if(document.getElementById('customerPw').value===CUSTOMER_PW){
+    document.getElementById('customerLogin').style.display='none';
+    document.getElementById('customerForm').style.display='block';
+  }else showToast('❌ 비밀번호가 올바르지 않습니다');
+}
 
 /* ── 관리자 로그인 ── */
 function checkLogin(){
@@ -1375,6 +1402,9 @@ window.addEventListener('load', () => {
   document.getElementById('card-mypage').addEventListener('click', () => showScreen('mypage'));
 
   /* 계약서 작성 화면 */
+  document.getElementById('btn-customer-login').addEventListener('click', checkCustomerLogin);
+  document.getElementById('customerEmail').addEventListener('keydown', e => { if(e.key==='Enter') checkCustomerLogin(); });
+  document.getElementById('customerPw').addEventListener('keydown', e => { if(e.key==='Enter') checkCustomerLogin(); });
   document.getElementById('btn-share-customer').addEventListener('click', () => shareScreen('customer'));
   document.getElementById('btn-home-from-customer').addEventListener('click', () => showScreen('home'));
   document.getElementById('btn-sig-clear').addEventListener('click', clearSig);
