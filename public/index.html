@@ -239,7 +239,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="login-logo">✍️</div>
       <h2 class="login-title">신규 계약 서명</h2>
       <p class="login-sub">담당자 확인 후 계약서 작성 가능합니다</p>
-      <input class="login-input" type="email" id="customerEmail" placeholder="이메일 입력"/>
+      <input class="login-input" type="text" id="customerEmail" placeholder="아이디 입력" autocomplete="off"/>
       <input class="login-input" type="password" id="customerPw" placeholder="비밀번호 입력"/>
       <button id="btn-customer-login" class="login-btn">확인</button>
     </div>
@@ -376,7 +376,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="login-logo">🔐</div>
       <h2 class="login-title">관리자 로그인</h2>
       <p class="login-sub">계약 목록 조회 및 출력 권한</p>
-      <input class="login-input" type="email" id="adminEmail" placeholder="이메일 입력"/>
+      <input class="login-input" type="text" id="adminEmail" placeholder="아이디 입력" autocomplete="off"/>
       <input class="login-input" type="password" id="adminPw" placeholder="비밀번호 입력"/>
       <button id="btn-admin-login" class="login-btn">로그인</button>
       <button id="btn-admin-reset" style="width:100%;padding:10px;background:transparent;border:none;color:#1A56DB;font-family:inherit;font-size:13px;cursor:pointer;margin-top:4px;">🔑 비밀번호를 잊으셨나요?</button>
@@ -538,7 +538,9 @@ try {
 }
 
 /* ── 상수 / 상태 ── */
+const ADMIN_ID = 'n41u0912';
 const ADMIN_PW = '1234';
+const CUSTOMER_ID = 'n41u0912';
 const CUSTOMER_PW = '1234';
 const STORAGE_KEY = 'daesang_contracts';
 let currentContract = null;
@@ -689,20 +691,24 @@ function v(id){return(document.getElementById(id)||{}).value||'';}
 
 /* ── 신규계약 로그인 ── */
 function checkCustomerLogin(){
-  if(document.getElementById('customerPw').value===CUSTOMER_PW){
+  const id = document.getElementById('customerEmail').value.trim();
+  const pw = document.getElementById('customerPw').value;
+  if(id===CUSTOMER_ID && pw===CUSTOMER_PW){
     document.getElementById('customerLogin').style.display='none';
     document.getElementById('customerForm').style.display='block';
-  }else showToast('❌ 비밀번호가 올바르지 않습니다');
+  }else showToast('❌ 아이디 또는 비밀번호가 올바르지 않습니다');
 }
 
 /* ── 관리자 로그인 ── */
 function checkLogin(){
-  if(document.getElementById('adminPw').value===ADMIN_PW){
+  const id = document.getElementById('adminEmail').value.trim();
+  const pw = document.getElementById('adminPw').value;
+  if(id===ADMIN_ID && pw===ADMIN_PW){
     document.getElementById('adminLogin').style.display='none';
     document.getElementById('adminDash').style.display='block';
     window._fbListening = false;
     loadAdminData();
-  }else showToast('❌ 비밀번호가 올바르지 않습니다');
+  }else showToast('❌ 아이디 또는 비밀번호가 올바르지 않습니다');
 }
 
 /* ── 관리자 탭 ── */
