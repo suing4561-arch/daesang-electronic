@@ -1556,11 +1556,6 @@ window.addEventListener('load',()=>{
   ['price_pos','price_kiosk','price_table','price_qr','price_card','mgt_pos','mgt_kiosk','mgt_table','mgt_qr','mgt_card','c_monthly'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',()=>formatComma(el));});
   document.getElementById('btn-view-mycontract').addEventListener('click',()=>{
     showScreen('mypage');
-    if(currentContract){
-      document.getElementById('my_bizno').value=currentContract.customer.bizno||'';
-      document.getElementById('my_owner').value=currentContract.customer.owner||'';
-      mypageLogin();
-    }
   });
   document.getElementById('btn-home-from-admin').addEventListener('click',()=>showScreen('home'));
   /* ★ 아이디 입력에서 Enter 키 처리 */
