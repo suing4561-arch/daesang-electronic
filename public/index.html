@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -332,7 +333,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
         </div>
         <div class="sig-wrap" id="sigWrap">
           <canvas id="sigCanvas" class="sig-canvas"></canvas>
-          <div class="sig-hint" id="sigHint">�� 여기에 서명하세요</div>
+          <div class="sig-hint" id="sigHint">👆 여기에 서명하세요</div>
         </div>
         <div class="sig-tools">
           <button id="btn-sig-clear" class="sig-tool-btn danger">✕ 지우기</button>
@@ -552,6 +553,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 /* ── Firebase 초기화 ── */
 const firebaseConfig = {
@@ -564,9 +566,11 @@ const firebaseConfig = {
   appId: "1:611998747428:web:4b22853f4907859bba41b1"
 };
 let db = null;
+let auth = null;
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
+  auth = firebase.auth();
 } catch(e) {
   console.warn('Firebase 초기화 실패 (오프라인 모드):', e);
 }
@@ -1600,4 +1604,3 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
-
