@@ -9,22 +9,16 @@ const firebaseConfig = {
   appId: "1:611998747428:web:4b22853f4907859bba41b1"
 };
 let db = null;
+let auth = null;
 try {
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
   db = firebase.database();
+  auth = firebase.auth();
 } catch(e) {
   console.warn('Firebase 초기화 실패 (오프라인 모드):', e);
 }
-
-/* ══════════════════════════════════════
-   ★ 관리자 계정 (아이디 / 비밀번호)
-   ══════════════════════════════════════ */
-const ADMIN_ACCOUNTS = [
-  { id: 'n41u0912', pw: '1234' }
-];
-let adminLoggedIn = false;
 
 /* ── 상수 / 상태 ── */
 const STORAGE_KEY = 'daesang_contracts';
@@ -44,13 +38,8 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='admin'){
-    if(adminLoggedIn){
-      document.getElementById('adminLogin').style.display='none';
-      document.getElementById('adminDash').style.display='block';
-    } else {
-      document.getElementById('adminLogin').style.display='flex';
-      document.getElementById('adminDash').style.display='none';
-    }
+    document.getElementById('adminLogin').style.display='flex';
+    document.getElementById('adminDash').style.display='none';
   }
   if(id==='mypage'){
     document.getElementById('mypageLogin').style.display='block';
@@ -116,42 +105,25 @@ function toggleAllChecks(el){
   ['chk_terms','chk_privacy','chk_goods','chk_cms'].forEach(id=>document.getElementById(id).checked=el.checked);
 }
 
-/* ══════════════════════════════════════
-   ★ 제품 타입 추론 (전역 함수)
-   저장된 type 필드 우선, 없으면 price/mgt로 추론
-   ══════════════════════════════════════ */
-function inferType(p){
-  if(p.type && p.type !== '임대') return p.type;
-  const price = Number(String(p.price||'').replace(/,/g,''))||0;
-  const mgt   = Number(String(p.mgt||'').replace(/,/g,''))||0;
-  if(price>0 && mgt>0)  return '판매+임대';
-  if(price>0 && !mgt)   return '구매';
-  return '임대';
-}
-
 /* ── 제출 ── */
 async function submitContract(){
-  const required=[['c_company','상호명'],['c_owner','대표자명'],['c_bizno','사업자번호'],['c_mobile','대표자 휴대폰'],['c_addr','사업장주소']];
+  const required=[['c_company','상호명'],['c_owner','대표자명'],['c_bizno','사업자번호'],['c_mobile','대표자 휴대폰'],['c_addr','사업장주소'],['c_bank','은행명'],['c_account','출금계좌번호'],['c_depositor','예금주명']];
   for(const[id,name]of required){if(!v(id)){showToast(`⚠️ ${name}을(를) 입력해 주세요`);return;}}
-  if(!['chk_terms','chk_privacy','chk_goods'].every(id=>document.getElementById(id).checked)){showToast('⚠️ 필수 약관에 모두 동의해 주세요');return;}
+  if(!['chk_terms','chk_privacy','chk_goods','chk_cms'].every(id=>document.getElementById(id).checked)){showToast('⚠️ 필수 약관에 모두 동의해 주세요');return;}
   if(!hasSig()){showToast('⚠️ 서명을 해주세요');return;}
   showLoading('계약서 저장 중...');
   await sleep(800);
-
-  /* ★ select 드롭다운 값을 직접 읽어서 저장 */
-  const sel = id => { const el=document.getElementById(id); return el?el.value:'임대'; };
-
   const contract={
     id:'C'+Date.now(),
     signedAt:new Date().toISOString(),
     supplier:{name:'대상정보통신',bizno:'607-10-86981',ceo:'김진선',tel:'051-903-4561',addr:'부산시 남구 동명로 146번길 123'},
     customer:{company:v('c_company'),owner:v('c_owner'),bizno:v('c_bizno'),tel:v('c_tel'),mobile:v('c_mobile'),email:v('c_email'),addr:v('c_addr')},
     products:[
-      {name:'POS',        qty:v('qty_pos'),   price:v('price_pos'),   mgt:v('mgt_pos'),   type:sel('type_pos')},
-      {name:'키오스크',   qty:v('qty_kiosk'), price:v('price_kiosk'), mgt:v('mgt_kiosk'), type:sel('type_kiosk')},
-      {name:'테이블오더', qty:v('qty_table'), price:v('price_table'), mgt:v('mgt_table'), type:sel('type_table')},
-      {name:'QR오더',     qty:v('qty_qr'),    price:v('price_qr'),    mgt:v('mgt_qr'),    type:sel('type_qr')},
-      {name:'카드단말기', qty:v('qty_card'),  price:v('price_card'),  mgt:v('mgt_card'),  type:sel('type_card')},
+      {name:'POS',qty:v('qty_pos'),price:v('price_pos'),mgt:v('mgt_pos'),type:'임대'},
+      {name:'키오스크',qty:v('qty_kiosk'),price:v('price_kiosk'),mgt:v('mgt_kiosk'),type:'임대'},
+      {name:'테이블오더',qty:v('qty_table'),price:v('price_table'),mgt:v('mgt_table'),type:'임대'},
+      {name:'QR오더',qty:v('qty_qr'),price:v('price_qr'),mgt:v('mgt_qr'),type:'임대'},
+      {name:'카드단말기',qty:v('qty_card'),price:v('price_card'),mgt:v('mgt_card'),type:'임대'},
     ],
     conditions:{period:v('c_period'),payday:v('c_payday')},
     memo:v('c_memo'),
@@ -159,7 +131,7 @@ async function submitContract(){
     signature:getSigDataURL()
   };
   try {
-    if(typeof db !== 'undefined' && db){
+    if(typeof db !== 'undefined'){
       await db.ref('contracts/' + contract.id).set(contract);
     }
   } catch(e){ console.error('Firebase 저장 실패:', e); }
@@ -169,32 +141,48 @@ async function submitContract(){
 }
 function v(id){return(document.getElementById(id)||{}).value||'';}
 
-/* ══════════════════════════════════════
-   ★ 관리자 로그인 - 아이디/비밀번호 방식
-   ══════════════════════════════════════ */
-function checkLogin(){
-  const inputId = (document.getElementById('adminId').value||'').trim();
-  const inputPw = document.getElementById('adminPw').value;
-  if(!inputId||!inputPw){ showToast('⚠️ 아이디와 비밀번호를 입력하세요'); return; }
-  const matched = ADMIN_ACCOUNTS.some(a => a.id===inputId && a.pw===inputPw);
-  if(matched){
-    adminLoggedIn = true;
+/* ── 관리자 로그인 ── */
+async function checkLogin(){
+  const email = document.getElementById('adminEmail').value.trim();
+  const pw    = document.getElementById('adminPw').value;
+  if(!email || !pw){ showToast('⚠️ 이메일과 비밀번호를 입력하세요'); return; }
+  showLoading('로그인 중...');
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    hideLoading();
     document.getElementById('adminLogin').style.display='none';
     document.getElementById('adminDash').style.display='block';
     window._fbListening = false;
     loadAdminData();
-  } else {
-    showToast('❌ 아이디 또는 비밀번호가 올바르지 않습니다');
-    document.getElementById('adminPw').value='';
-    document.getElementById('adminPw').focus();
+  } catch(e) {
+    hideLoading();
+    if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
+      showToast('❌ 이메일 또는 비밀번호가 올바르지 않습니다');
+    } else {
+      showToast('❌ 로그인 실패: ' + e.message);
+    }
+  }
+}
+
+async function resetPassword(){
+  const email = document.getElementById('adminEmail').value.trim();
+  if(!email){ showToast('⚠️ 이메일을 먼저 입력해 주세요'); return; }
+  showLoading('재설정 메일 발송 중...');
+  try {
+    await auth.sendPasswordResetEmail(email);
+    hideLoading();
+    showToast('✅ ' + email + ' 으로 재설정 링크를 보냈습니다');
+  } catch(e) {
+    hideLoading();
+    showToast('❌ 발송 실패: ' + e.message);
   }
 }
 
 function adminLogout(){
-  adminLoggedIn = false;
+  if(auth) auth.signOut();
   document.getElementById('adminLogin').style.display='flex';
   document.getElementById('adminDash').style.display='none';
-  document.getElementById('adminId').value='';
+  document.getElementById('adminEmail').value='';
   document.getElementById('adminPw').value='';
   window._fbListening = false;
   showToast('로그아웃 되었습니다');
@@ -213,7 +201,7 @@ function loadAdminData(){
   const now=new Date();
   document.getElementById('adminDate').textContent=now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
   showLoading('계약 목록 불러오는 중...');
-  if(typeof db !== 'undefined' && db){
+  if(typeof db !== 'undefined'){
     db.ref('contracts').orderByChild('signedAt').once('value', snap => {
       hideLoading();
       const data = snap.val();
@@ -236,20 +224,6 @@ function loadAdminData(){
     hideLoading();
     renderAdminStats(getContracts());
   }
-}
-
-/* ★ 계약 목록 타입 표시용 */
-function getContractDisplayType(contract){
-  const prods = (contract.products||[]).filter(p=>p.qty&&p.qty!==''&&p.qty!=='0');
-  const target = prods.length ? prods : (contract.products||[]);
-  const types  = target.map(p=>inferType(p));
-  const hasMixed  = types.some(t=>t==='판매+임대');
-  const hasBuy    = types.some(t=>t==='구매');
-  const hasRental = types.some(t=>t==='임대');
-  if(hasMixed)            return {text:'판매+임대', color:'#059669'};
-  if(hasBuy && hasRental) return {text:'혼합',      color:'#7C3AED'};
-  if(hasBuy)              return {text:'구매',      color:'#EF4444'};
-  return                         {text:'임대',      color:'#1A56DB'};
 }
 
 function renderAdminStats(contracts){
@@ -282,11 +256,10 @@ function renderContractList(contracts,listId,showActions){
     const period=parseInt(c.conditions?.period||36);
     const expDate=new Date(d);expDate.setMonth(expDate.getMonth()+period);
     const expStr=expDate.toLocaleDateString('ko-KR');
-    const dt=getContractDisplayType(c);
     return`<div class="contract-item" data-id="${c.id}" data-actions="${showActions}">
       <div class="contract-avatar">${c.customer.company.slice(0,2)}</div>
       <div class="contract-info">
-        <div class="contract-name">${c.customer.company} <span style="font-size:11px;font-weight:700;color:${dt.color};">[${dt.text}]</span></div>
+        <div class="contract-name">${c.customer.company}</div>
         <div class="contract-meta">${c.customer.owner} · ${c.customer.mobile} · ${dateStr}</div>
         <div class="contract-meta" style="color:var(--gray5)">만기: ${expStr}</div>
       </div>
@@ -369,8 +342,7 @@ function openDetail(id,showActions){
   const period=parseInt(c.conditions?.period||36);
   const exp=new Date(d);exp.setMonth(exp.getMonth()+period);
   document.getElementById('modalTitle').textContent=c.customer.company+' 계약서';
-  /* ★ inferType 사용해서 올바른 타입 표시 */
-  const prods=c.products.filter(p=>p.qty&&p.qty!=='0').map(p=>`<tr><td>${p.name}</td><td>${p.qty}</td><td>${p.price?Number(String(p.price).replace(/,/g,'')).toLocaleString()+'원':'-'}</td><td>${inferType(p)}</td><td>${p.mgt?Number(String(p.mgt).replace(/,/g,'')).toLocaleString()+'원':'-'}</td></tr>`).join('');
+  const prods=c.products.filter(p=>p.qty&&p.qty!=='0').map(p=>`<tr><td>${p.name}</td><td>${p.qty}</td><td>${p.price?Number(p.price).toLocaleString()+'원':'-'}</td><td>${p.type}</td><td>${p.mgt?Number(p.mgt).toLocaleString()+'원':'-'}</td></tr>`).join('');
   document.getElementById('modalBody').innerHTML=`
     <div class="detail-section">
       <div class="detail-section-title">서명 일시</div>
@@ -439,7 +411,7 @@ function mypageLogin(){
     renderMypageList(contracts);
   }
   showLoading('계약서 조회 중...');
-  if(typeof db !== 'undefined' && db){
+  if(typeof db !== 'undefined'){
     db.ref('contracts').orderByChild('signedAt').once('value', snap => {
       const data = snap.val();
       const all = data ? Object.values(data) : [];
@@ -487,7 +459,7 @@ function sendEmail(){
   if(!currentContract)return;
   const c=currentContract;
   const email=c.customer.email;
-  if(!email){showToast('⚠️ 등록된 이메일이 없습니다.');return;}
+  if(!email){showToast('⚠️ 등록된 이메일이 없습니다. 계약서에 이메일을 추가해주세요.');return;}
   const subject=encodeURIComponent(`[대상정보통신] ${c.customer.company} 계약서 사본`);
   const body=encodeURIComponent(`안녕하세요, ${c.customer.owner} 대표님\n\n대상정보통신 전자서명 계약서 사본을 첨부하여 드립니다.\n\n계약일: ${new Date(c.signedAt).toLocaleDateString('ko-KR')}\n계약번호: ${c.id}\n\n문의: 051-903-4561\n\n감사합니다.`);
   window.open(`mailto:${email}?subject=${subject}&body=${body}`);
@@ -498,10 +470,6 @@ function sendEmail(){
 function buildContractHTML(c){
   const d=new Date(c.signedAt);
   const yy=d.getFullYear(),mm=d.getMonth()+1,dd=d.getDate();
-  const _ap=c.products.filter(p=>p.qty);
-  const _hasLease=_ap.some(p=>inferType(p)==='임대'||inferType(p)==='판매+임대');
-  const _hasBuy=_ap.some(p=>inferType(p)==='구매'||inferType(p)==='판매+임대');
-  const _contractType=_hasLease&&_hasBuy?'구매+임대':_hasBuy?'구매':'임대';
   return`<div class="pc">
   <div class="pc-title-wrap"><div class="pc-title">카드단말기 · POS · 키오스크 · 테이블오더 · QR오더&nbsp;&nbsp;판매 할부 무상 임대 유지보수 및 서비스 계약서</div></div>
   <div class="pc-van"><span>VAN 구분 : 나이스정보통신</span><span>계약번호 : ${c.id}</span><span>서명일시 : ${yy}년 ${mm}월 ${dd}일</span></div>
@@ -518,7 +486,7 @@ function buildContractHTML(c){
     <tr><td class="label">상&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;호</td><td class="val">${c.supplier.name}</td><td class="label">전화번호</td><td class="val">${c.supplier.tel}</td><td style="border:none;"></td>
       <td class="label">상&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;호</td><td class="val">${c.customer.company}</td><td class="label">대표자 휴대폰</td><td class="val">${c.customer.mobile}</td></tr>
     <tr><td class="label">사 업 장 주 소</td><td colspan="3" class="val">${c.supplier.addr}</td><td style="border:none;"></td>
-      <td class="label">대 표 자 명</td><td class="val">${c.customer.owner}</td><td class="label">계약내용</td><td class="val center">☑ ${_contractType}</td></tr>
+      <td class="label">대 표 자 명</td><td class="val">${c.customer.owner}</td><td class="label">계약내용</td><td class="val center">☑ 임대</td></tr>
     <tr><td class="label"></td><td colspan="3" class="val"></td><td style="border:none;"></td>
       <td class="label">사업장주소</td><td colspan="3" class="val">${c.customer.addr}</td></tr>
   </table>
@@ -534,9 +502,9 @@ function buildContractHTML(c){
     <tbody>
       ${c.products.map((p,i)=>`<tr>
         <td class="center">${p.name}</td><td class="center"></td><td class="center">${p.qty||''}</td>
-        <td class="center">${p.price?Number(String(p.price).replace(/,/g,'')).toLocaleString():''}</td>
-        <td class="center">${inferType(p)}</td>
-        <td class="center">${p.mgt?Number(String(p.mgt).replace(/,/g,'')).toLocaleString()+'원':''}</td>
+        <td class="center">${p.price?Number(p.price).toLocaleString():''}</td>
+        <td class="center">${p.type}</td>
+        <td class="center">${p.mgt?Number(p.mgt).toLocaleString()+'원':''}</td>
         ${i===0?`<td class="center" rowspan="${c.products.length}">${c.products.filter(x=>x.qty).map(x=>x.name).join('·')}</td><td class="center" rowspan="${c.products.length}">${c.conditions?.period||36}개월</td><td class="small" rowspan="${c.products.length}" style="vertical-align:top;padding:4px;">${c.memo||''}</td>`:''}
       </tr>`).join('')}
     </tbody>
@@ -544,8 +512,8 @@ function buildContractHTML(c){
   <div class="section-title" style="margin-bottom:0;">◎ 주요공급 조건 및 특약사항(표3)</div>
   <table style="margin-bottom:4px;">
     <tr>
-      <td class="label" style="width:70px;">관 리 비/ASP</td><td class="val" style="width:130px;">${c.products.find(p=>p.mgt)?Number(String(c.products.find(p=>p.mgt).mgt).replace(/,/g,'')).toLocaleString()+'원(부가세 별도)':''}</td>
-      <td class="label" style="width:60px;">임 대 물 품</td><td class="val" style="width:120px;">${c.products.filter(p=>p.qty&&inferType(p)==='임대').map(p=>p.name).join(', ')}</td>
+      <td class="label" style="width:70px;">관 리 비/ASP</td><td class="val" style="width:130px;">${c.products.find(p=>p.mgt)?Number(c.products.find(p=>p.mgt).mgt).toLocaleString()+'원(부가세 별도)':''}</td>
+      <td class="label" style="width:60px;">임 대 물 품</td><td class="val" style="width:120px;">${c.products.filter(p=>p.qty&&p.type==='임대').map(p=>p.name).join(', ')}</td>
       <td class="label" style="width:70px;">의무사용기간</td><td class="val">${c.conditions?.period||36}개월</td>
       <td class="label" style="width:60px;">지정출금일</td><td class="val">매월 ${c.conditions?.payday||1}일</td>
     </tr>
@@ -641,81 +609,190 @@ function customerPrint(){
 
 /* ── 공유 ── */
 let shareTarget = '';
+
 function shareScreen(target){
   shareTarget = target;
   const isSign = target === 'customer';
   const baseUrl = 'https://daesang-contract.web.app';
+
+  document.getElementById('shareTitle').textContent = isSign ? '✍️ 서명 링크 공유' : '👤 계약서 조회 링크 공유';
+  document.getElementById('shareDesc').textContent = isSign
+    ? '고객에게 아래 링크를 보내면 핸드폰에서 바로 서명할 수 있습니다.'
+    : '고객에게 아래 링크를 보내면 사업자번호+대표자 성함으로 계약서를 조회할 수 있습니다.';
+
   const shareNote = document.getElementById('shareNote');
-  if(shareNote){
+  if (shareNote) {
     shareNote.textContent = isSign
       ? '📌 링크를 열면 바로 서명 화면으로 이동합니다'
       : '📌 링크를 열면 바로 계약서 조회 화면으로 이동합니다';
   }
-  if(db && isSign){
-    const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr','c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo','qty_pos','price_pos','mgt_pos','qty_kiosk','price_kiosk','mgt_kiosk','qty_table','price_table','mgt_table','qty_qr','price_qr','mgt_qr','qty_card','price_card','mgt_card'];
-    const data={};
-    fields.forEach(id=>{const el=document.getElementById(id);if(el&&el.value)data[id]=el.value;});
-    const code=Math.random().toString(36).substring(2,8).toUpperCase();
-    db.ref('tempForms/'+code).set({data,ts:Date.now()})
-      .then(()=>{document.getElementById('shareLinkInput').value=baseUrl+'?ref='+code;document.getElementById('shareModal').classList.add('open');})
-      .catch(()=>{
-        const params=new URLSearchParams();params.set('screen',target);
-        fields.forEach(id=>{const el=document.getElementById(id);if(el&&el.value)params.set(id,el.value);});
-        document.getElementById('shareLinkInput').value=baseUrl+'?'+params.toString();
+
+  if (db && isSign) {
+    const fields = [
+      'c_company','c_owner','c_bizno','c_tel','c_mobile',
+      'c_email','c_addr','c_bank','c_account','c_depositor',
+      'c_monthly','c_period','c_payday','c_memo',
+      'qty_pos','price_pos','mgt_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk',
+      'qty_table','price_table','mgt_table',
+      'qty_qr','price_qr','mgt_qr',
+      'qty_card','price_card','mgt_card'
+    ];
+
+    const data = {};
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.value) data[id] = el.value;
+    });
+
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    db.ref('tempForms/' + code).set({ data, ts: Date.now() })
+      .then(() => {
+        document.getElementById('shareLinkInput').value = baseUrl + '?ref=' + code;
+        document.getElementById('shareModal').classList.add('open');
+      })
+      .catch(() => {
+        const params = new URLSearchParams();
+        params.set('screen', target);
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.value) params.set(id, el.value);
+        });
+        document.getElementById('shareLinkInput').value = baseUrl + '?' + params.toString();
         document.getElementById('shareModal').classList.add('open');
       });
   } else {
-    const params=new URLSearchParams();params.set('screen',target);
-    document.getElementById('shareLinkInput').value=baseUrl+'?'+params.toString();
+    const params = new URLSearchParams();
+    params.set('screen', target);
+    if (isSign) {
+      const fields = [
+        'c_company','c_owner','c_bizno','c_tel','c_mobile',
+        'c_email','c_addr','c_bank','c_account','c_depositor',
+        'c_monthly','c_period','c_payday','c_memo',
+        'qty_pos','price_pos','mgt_pos',
+        'qty_kiosk','price_kiosk','mgt_kiosk',
+        'qty_table','price_table','mgt_table',
+        'qty_qr','price_qr','mgt_qr',
+        'qty_card','price_card','mgt_card'
+      ];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.value) params.set(id, el.value);
+      });
+    }
+    const url = baseUrl + '?' + params.toString();
+    document.getElementById('shareLinkInput').value = url;
     document.getElementById('shareModal').classList.add('open');
   }
 }
+
 function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
+
 function copyLink(){
-  const input=document.getElementById('shareLinkInput');
+  const input = document.getElementById('shareLinkInput');
   input.select();
-  try{navigator.clipboard.writeText(input.value).then(()=>showToast('✅ 링크가 복사되었습니다!'));}
-  catch(e){document.execCommand('copy');showToast('✅ 링크가 복사되었습니다!');}
+  try {
+    navigator.clipboard.writeText(input.value).then(()=>showToast('✅ 링크가 복사되었습니다!'));
+  } catch(e){
+    document.execCommand('copy');
+    showToast('✅ 링크가 복사되었습니다!');
+  }
 }
+
 function shareKakao(){
-  const url=document.getElementById('shareLinkInput').value;
-  window.open('https://sharer.kakao.com/talk/friends/picker/link?url='+encodeURIComponent(url),'_blank');
+  const url = document.getElementById('shareLinkInput').value;
+  const isSign = shareTarget === 'customer';
+  const text = isSign
+    ? '[대상정보통신] 전자서명 계약서 서명 요청\n아래 링크를 클릭하여 계약서에 서명해 주세요.\n\n' + url
+    : '[대상정보통신] 계약서 조회\n사업자번호+대표자 성함으로 계약서를 확인하세요.\n\n' + url;
+  const kakaoUrl = 'kakaolink://send?text=' + encodeURIComponent(text);
+  const fallback = 'https://sharer.kakao.com/talk/friends/picker/link?url=' + encodeURIComponent(url);
+  const a = document.createElement('a'); a.href = kakaoUrl;
+  try { a.click(); } catch(e){}
+  setTimeout(()=>{ window.open(fallback,'_blank'); }, 500);
   showToast('카카오톡 앱이 열립니다');
 }
+
 function shareSMS(){
-  const url=document.getElementById('shareLinkInput').value;
-  window.open('sms:?body='+encodeURIComponent('[대상정보통신] 계약서 링크: '+url));
+  const url = document.getElementById('shareLinkInput').value;
+  const isSign = shareTarget === 'customer';
+  const text = isSign
+    ? '[대상정보통신] 전자서명 계약서 서명 링크입니다. 아래 링크를 눌러 서명해 주세요: ' + url
+    : '[대상정보통신] 계약서 조회 링크입니다. 사업자번호+대표자 성함으로 확인하세요: ' + url;
+  window.open('sms:?body=' + encodeURIComponent(text));
   showToast('문자 앱이 열립니다');
 }
+
 function shareNative(){
-  const url=document.getElementById('shareLinkInput').value;
-  if(navigator.share){navigator.share({title:'대상정보통신 계약서',url}).catch(()=>copyLink());}
-  else{copyLink();}
+  const url = document.getElementById('shareLinkInput').value;
+  const isSign = shareTarget === 'customer';
+  const title = isSign ? '전자서명 계약서 서명 요청' : '계약서 조회';
+  const text = isSign
+    ? '[대상정보통신] 전자서명 계약서 서명 요청입니다. 링크를 눌러 서명해 주세요.'
+    : '[대상정보통신] 계약서 조회 링크입니다. 사업자번호+대표자 성함으로 확인하세요.';
+  if(navigator.share){
+    navigator.share({title,text,url}).catch(()=>copyLink());
+  } else {
+    copyLink();
+    showToast('이 브라우저는 공유를 지원하지 않아 링크를 복사했습니다');
+  }
 }
 
 /* ── 딥링크 ── */
 function checkDeepLink(){
-  const params=new URLSearchParams(window.location.search);
-  const ref=params.get('ref');
-  const screen=params.get('screen');
-  if(ref){
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  const screen = params.get('screen');
+
+  if (ref) {
     showScreen('customer');
-    if(db){
-      db.ref('tempForms/'+ref).once('value').then(snap=>{
-        if(!snap.exists())return;
-        const data=snap.val().data||{};
-        const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr','c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo','qty_pos','price_pos','mgt_pos','qty_kiosk','price_kiosk','mgt_kiosk','qty_table','price_table','mgt_table','qty_qr','price_qr','mgt_qr','qty_card','price_card','mgt_card'];
-        fields.forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.value=data[id];});
+
+    if (db) {
+      db.ref('tempForms/' + ref).once('value').then(snap => {
+        if (!snap.exists()) return;
+
+        const data = snap.val().data || {};
+        const fields = [
+          'c_company','c_owner','c_bizno','c_tel','c_mobile',
+          'c_email','c_addr','c_bank','c_account','c_depositor',
+          'c_monthly','c_period','c_payday','c_memo',
+          'qty_pos','price_pos','mgt_pos',
+          'qty_kiosk','price_kiosk','mgt_kiosk',
+          'qty_table','price_table','mgt_table',
+          'qty_qr','price_qr','mgt_qr',
+          'qty_card','price_card','mgt_card'
+        ];
+
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && data[id] !== undefined) el.value = data[id];
+        });
       });
     }
     return;
   }
-  if(screen==='customer'||screen==='mypage'){
+
+  if (screen === 'customer' || screen === 'mypage') {
     showScreen(screen);
-    if(screen==='customer'){
-      const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr','c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo','qty_pos','price_pos','mgt_pos','qty_kiosk','price_kiosk','mgt_kiosk','qty_table','price_table','mgt_table','qty_qr','price_qr','mgt_qr','qty_card','price_card','mgt_card'];
-      fields.forEach(id=>{const el=document.getElementById(id);const val=params.get(id);if(el&&val!==null)el.value=val;});
-    }
+  }
+
+  if (screen === 'customer') {
+    const fields = [
+      'c_company','c_owner','c_bizno','c_tel','c_mobile',
+      'c_email','c_addr','c_bank','c_account','c_depositor',
+      'c_monthly','c_period','c_payday','c_memo',
+      'qty_pos','price_pos','mgt_pos',
+      'qty_kiosk','price_kiosk','mgt_kiosk',
+      'qty_table','price_table','mgt_table',
+      'qty_qr','price_qr','mgt_qr',
+      'qty_card','price_card','mgt_card'
+    ];
+
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      const val = params.get(id);
+      if (el && val !== null) el.value = val;
+    });
   }
 }
 
@@ -729,14 +806,17 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 window.addEventListener('load', () => {
   initSigPad();
   checkDeepLink();
+
   window.addEventListener('resize', () => {
     if(document.getElementById('customer').classList.contains('active')) initSigPad();
   });
 
+  /* 홈 카드 */
   document.getElementById('card-customer').addEventListener('click', () => showScreen('customer'));
   document.getElementById('card-admin').addEventListener('click', () => showScreen('admin'));
   document.getElementById('card-mypage').addEventListener('click', () => showScreen('mypage'));
 
+  /* 계약서 작성 화면 */
   document.getElementById('btn-share-customer').addEventListener('click', () => shareScreen('customer'));
   document.getElementById('btn-home-from-customer').addEventListener('click', () => showScreen('home'));
   document.getElementById('btn-sig-clear').addEventListener('click', clearSig);
@@ -744,22 +824,27 @@ window.addEventListener('load', () => {
   document.getElementById('btn-submit').addEventListener('click', submitContract);
   document.getElementById('chk_all').addEventListener('change', function(){ toggleAllChecks(this); });
 
+  /* 성공 화면 */
   document.getElementById('btn-customer-print').addEventListener('click', customerPrint);
   document.getElementById('btn-home-from-success').addEventListener('click', () => showScreen('home'));
 
+  /* 관리자 화면 */
   document.getElementById('btn-home-from-admin').addEventListener('click', () => showScreen('home'));
-  document.getElementById('adminId').addEventListener('keydown', e => { if(e.key==='Enter') checkLogin(); });
+  document.getElementById('adminEmail').addEventListener('keydown', e => { if(e.key==='Enter') checkLogin(); });
   document.getElementById('adminPw').addEventListener('keydown', e => { if(e.key==='Enter') checkLogin(); });
   document.getElementById('btn-admin-login').addEventListener('click', checkLogin);
+  document.getElementById('btn-admin-reset').addEventListener('click', resetPassword);
   document.getElementById('btn-admin-logout').addEventListener('click', adminLogout);
   document.getElementById('btn-admin-refresh').addEventListener('click', loadAdminData);
   document.getElementById('btn-filter').addEventListener('click', applyFilter);
   document.getElementById('btn-export').addEventListener('click', exportExcel);
 
+  /* 관리자 탭 (이벤트 위임) */
   document.querySelectorAll('.admin-tab').forEach(tab => {
     tab.addEventListener('click', function(){ switchAdminTab(this.dataset.panel, this); });
   });
 
+  /* 계약 목록 클릭 (이벤트 위임) */
   document.getElementById('contractList').addEventListener('click', e => {
     const item = e.target.closest('.contract-item');
     if(item) openDetail(item.dataset.id, item.dataset.actions === 'true');
@@ -769,6 +854,7 @@ window.addEventListener('load', () => {
     if(item) openDetail(item.dataset.id, true);
   });
 
+  /* 마이페이지 */
   document.getElementById('btn-share-mypage').addEventListener('click', () => shareScreen('mypage'));
   document.getElementById('btn-home-from-mypage').addEventListener('click', () => showScreen('home'));
   document.getElementById('btn-mypage-login').addEventListener('click', mypageLogin);
@@ -776,17 +862,20 @@ window.addEventListener('load', () => {
   document.getElementById('my_owner').addEventListener('keydown', e => { if(e.key==='Enter') mypageLogin(); });
   document.getElementById('btn-mypage-logout').addEventListener('click', mypageLogout);
 
+  /* 마이페이지 계약 목록 클릭 (이벤트 위임) */
   document.getElementById('mypageList').addEventListener('click', e => {
     const item = e.target.closest('.contract-item');
     if(item) openDetail(item.dataset.id, false);
   });
 
+  /* 상세 모달 */
   document.getElementById('detailModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
   document.getElementById('btn-modal-close').addEventListener('click', closeModal);
   document.getElementById('btn-modal-print').addEventListener('click', printContract);
   document.getElementById('btn-modal-pdf').addEventListener('click', savePDF);
   document.getElementById('btn-modal-email').addEventListener('click', sendEmail);
 
+  /* 공유 모달 */
   document.getElementById('shareModal').addEventListener('click', function(e){ if(e.target===this) closeShareModal(); });
   document.getElementById('btn-share-close').addEventListener('click', closeShareModal);
   document.getElementById('btn-copy-link').addEventListener('click', copyLink);
