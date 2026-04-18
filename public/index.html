@@ -658,9 +658,11 @@ function getContractDisplayType(contract){
   const types=target.map(p=>inferType(p));
   const hasMixed=types.some(t=>t==='판매+임대');
   const hasBuy=types.some(t=>t==='구매');
-  if(hasMixed) return{text:'판매+임대',color:'#059669'};
-  if(hasBuy) return{text:'구매',color:'#EF4444'};
-  return{text:'임대',color:'#1A56DB'};
+  const hasRental=types.some(t=>t==='임대');
+  if(hasMixed)          return{text:'판매+임대',color:'#059669'};
+  if(hasBuy&&hasRental) return{text:'혼합',color:'#7C3AED'};
+  if(hasBuy)            return{text:'구매',color:'#EF4444'};
+  return                      {text:'임대',color:'#1A56DB'};
 }
 
 /* ── 제출 ── */
