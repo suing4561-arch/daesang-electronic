@@ -999,6 +999,10 @@ function sendEmail(){
 function buildContractHTML(c){
   const d=new Date(c.signedAt);
   const yy=d.getFullYear(),mm=d.getMonth()+1,dd=d.getDate();
+  const _ap=c.products.filter(p=>p.qty);
+  const _hasLease=_ap.some(p=>p.type==='임대'||p.type==='판매+임대');
+  const _hasBuy=_ap.some(p=>p.type==='구매'||p.type==='판매+임대');
+  const _contractType=_hasLease&&_hasBuy?'구매+임대':_hasBuy?'구매':'임대';
   return`<div class="pc">
   <div class="pc-title-wrap"><div class="pc-title">카드단말기 · POS · 키오스크 · 테이블오더 · QR오더&nbsp;&nbsp;판매 할부 무상 임대 유지보수 및 서비스 계약서</div></div>
   <div class="pc-van"><span>VAN 구분 : 나이스정보통신</span><span>계약번호 : ${c.id}</span><span>서명일시 : ${yy}년 ${mm}월 ${dd}일</span></div>
@@ -1015,7 +1019,7 @@ function buildContractHTML(c){
     <tr><td class="label">상&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;호</td><td class="val">${c.supplier.name}</td><td class="label">전화번호</td><td class="val">${c.supplier.tel}</td><td style="border:none;"></td>
       <td class="label">상&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;호</td><td class="val">${c.customer.company}</td><td class="label">대표자 휴대폰</td><td class="val">${c.customer.mobile}</td></tr>
     <tr><td class="label">사 업 장 주 소</td><td colspan="3" class="val">${c.supplier.addr}</td><td style="border:none;"></td>
-      <td class="label">대 표 자 명</td><td class="val">${c.customer.owner}</td><td class="label">계약내용</td><td class="val center">☑ 임대</td></tr>
+      <td class="label">대 표 자 명</td><td class="val">${c.customer.owner}</td><td class="label">계약내용</td><td class="val center">☑ ${_contractType}</td></tr>
     <tr><td class="label"></td><td colspan="3" class="val"></td><td style="border:none;"></td>
       <td class="label">사업장주소</td><td colspan="3" class="val">${c.customer.addr}</td></tr>
   </table>
