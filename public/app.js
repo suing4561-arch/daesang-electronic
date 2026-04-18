@@ -1,3 +1,4 @@
+// v2
 /* ── Firebase 초기화 ── */
 const firebaseConfig = {
   apiKey: "AIzaSyB6x7uhmAmt2PrUl1SH5I_jP8i0hP35c9A",
