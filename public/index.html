@@ -645,9 +645,9 @@ function parseAmt(v){return Number(String(v||'').replace(/,/g,''))||0;}
 
 /* ── 계약 유형 판별 ── */
 function getContractDisplayType(contract){
-  const types=(contract.products||[]).map(p=>p.type||'임대');
+  const types=(contract.products||[]).filter(p=>p.qty).map(p=>inferType(p));
   if(types.includes('판매+임대')) return{text:'판매+임대',color:'#059669'};
-  if(types.includes('구매')) return{text:'판매',color:'#EF4444'};
+  if(types.includes('구매')) return{text:'구매',color:'#EF4444'};
   return{text:'임대',color:'#0F172A'};
 }
 
