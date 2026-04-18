@@ -24,6 +24,16 @@ try {
 const STORAGE_KEY = 'daesang_contracts';
 let currentContract = null;
 
+/* ── 계약 유형 판별 ── */
+function inferType(p){
+  if(p.type && p.type !== '임대') return p.type;
+  const price=Number(String(p.price||'').replace(/,/g,''))||0;
+  const mgt=Number(String(p.mgt||'').replace(/,/g,''))||0;
+  if(price>0 && mgt>0) return '판매+임대';
+  if(price>0 && !mgt)  return '구매';
+  return '임대';
+}
+
 /* ── 로컬스토리지 ── */
 function getContracts(){
   try { const r=localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):[]; }
@@ -342,7 +352,7 @@ function openDetail(id,showActions){
   const period=parseInt(c.conditions?.period||36);
   const exp=new Date(d);exp.setMonth(exp.getMonth()+period);
   document.getElementById('modalTitle').textContent=c.customer.company+' 계약서';
-  const prods=c.products.filter(p=>p.qty&&p.qty!=='0').map(p=>`<tr><td>${p.name}</td><td>${p.qty}</td><td>${p.price?Number(p.price).toLocaleString()+'원':'-'}</td><td>${p.type}</td><td>${p.mgt?Number(p.mgt).toLocaleString()+'원':'-'}</td></tr>`).join('');
+  const prods=c.products.filter(p=>p.qty&&p.qty!=='0').map(p=>`<tr><td>${p.name}</td><td>${p.qty}</td><td>${p.price?Number(p.price).toLocaleString()+'원':'-'}</td><td>${inferType(p)}</td><td>${p.mgt?Number(p.mgt).toLocaleString()+'원':'-'}</td></tr>`).join('');
   document.getElementById('modalBody').innerHTML=`
     <div class="detail-section">
       <div class="detail-section-title">서명 일시</div>
@@ -503,7 +513,7 @@ function buildContractHTML(c){
       ${c.products.map((p,i)=>`<tr>
         <td class="center">${p.name}</td><td class="center"></td><td class="center">${p.qty||''}</td>
         <td class="center">${p.price?Number(p.price).toLocaleString():''}</td>
-        <td class="center">${p.type}</td>
+        <td class="center">${inferType(p)}</td>
         <td class="center">${p.mgt?Number(p.mgt).toLocaleString()+'원':''}</td>
         ${i===0?`<td class="center" rowspan="${c.products.length}">${c.products.filter(x=>x.qty).map(x=>x.name).join('·')}</td><td class="center" rowspan="${c.products.length}">${c.conditions?.period||36}개월</td><td class="small" rowspan="${c.products.length}" style="vertical-align:top;padding:4px;">${c.memo||''}</td>`:''}
       </tr>`).join('')}
@@ -513,7 +523,7 @@ function buildContractHTML(c){
   <table style="margin-bottom:4px;">
     <tr>
       <td class="label" style="width:70px;">관 리 비/ASP</td><td class="val" style="width:130px;">${c.products.find(p=>p.mgt)?Number(c.products.find(p=>p.mgt).mgt).toLocaleString()+'원(부가세 별도)':''}</td>
-      <td class="label" style="width:60px;">임 대 물 품</td><td class="val" style="width:120px;">${c.products.filter(p=>p.qty&&p.type==='임대').map(p=>p.name).join(', ')}</td>
+      <td class="label" style="width:60px;">임 대 물 품</td><td class="val" style="width:120px;">${c.products.filter(p=>p.qty&&inferType(p)==='임대').map(p=>p.name).join(', ')}</td>
       <td class="label" style="width:70px;">의무사용기간</td><td class="val">${c.conditions?.period||36}개월</td>
       <td class="label" style="width:60px;">지정출금일</td><td class="val">매월 ${c.conditions?.payday||1}일</td>
     </tr>
