@@ -522,31 +522,11 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
-/* ── Firebase 초기화 ── */
-const firebaseConfig = {
-  apiKey: "AIzaSyB6x7uhmAmt2PrUl1SH5I_jP8i0hP35c9A",
-  authDomain: "daesang-contract.firebaseapp.com",
-  databaseURL: "https://daesang-contract-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "daesang-contract",
-  storageBucket: "daesang-contract.firebasestorage.app",
-  messagingSenderId: "611998747428",
-  appId: "1:611998747428:web:4b22853f4907859bba41b1"
-};
-let db = null;
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-} catch(e) {
-  console.warn('Firebase 초기화 실패 (오프라인 모드):', e);
-}
-
 /* ── 상수 / 상태 ── */
 const ADMIN_ID = 'n41u0912';
 const ADMIN_PW = '1234';
 const CUSTOMER_ID = 'n41u0912';
 const CUSTOMER_PW = '1234';
-const STORAGE_KEY = 'daesang_contracts';
-let currentContract = null;
 let currentRef = null;
 
 /* ── 로컬스토리지 ── */
