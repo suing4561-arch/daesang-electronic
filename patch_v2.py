@@ -91,7 +91,9 @@ function toggleJuminField(el){
   if(nd)nd.textContent=el.value||'-';
 }"""
 
-if old5 in html:
+if 'function calcTotal()' in html:
+    results.append("패치5 ⚠️ 이미 적용됨(스킵)")
+elif old5 in html:
     html = html.replace(old5, new5)
     results.append("패치5 ✅ calcTotal + toggleJuminField 함수 추가")
 else:
