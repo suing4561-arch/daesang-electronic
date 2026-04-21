@@ -645,6 +645,8 @@ function formatComma(input){
   input.value=raw?Number(raw).toLocaleString():'';
 }
 function parseAmt(v){return Number(String(v||'').replace(/,/g,''))||0;}
+
+/* ── 합계 자동계산 ── */
 function calcTotal(){
   const ids=['pos','kiosk','table','qr','card'];
   let tp=0,tm=0;
@@ -657,9 +659,12 @@ function calcTotal(){
   if(tpEl)tpEl.textContent=tp?tp.toLocaleString():'0';
   if(tmEl)tmEl.textContent=tm?tm.toLocaleString()+'원':'0';
 }
+
+/* ── 주민번호 앞자리 입력창 토글 ── */
 function toggleJuminField(el){
   const wrap=document.getElementById('jumin_wrap');
   if(wrap)wrap.style.display=el.value.trim()?'block':'none';
+  /* 서명인 이름 동기화 */
   const nd=document.getElementById('sigNameDisplay');
   if(nd)nd.textContent=el.value||'-';
 }
@@ -1466,11 +1471,7 @@ window.addEventListener('load', () => {
   document.getElementById('btn-submit').addEventListener('click', submitContract);
   document.getElementById('chk_all').addEventListener('change', function(){ toggleAllChecks(this); });
 
-  /* 서명인 이름 실시간 표시 */
-  document.getElementById('c_owner').addEventListener('input', function(){
-    const nd=document.getElementById('sigNameDisplay');
-    if(nd) nd.textContent=this.value||'-';
-  });
+  /* 서명인 이름 실시간 표시 - toggleJuminField에서 처리 */
 
   /* 금액 콤마 자동 포맷 */
   ['price_pos','price_kiosk','price_table','price_qr','price_card',
