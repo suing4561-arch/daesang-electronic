@@ -265,9 +265,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="section-body">
         <div class="info-grid">
           <div class="info-item full"><span class="info-label">상호명 *</span><input class="info-input" id="c_company" placeholder="상호명 입력"/></div>
-          <div class="info-item"><span class="info-label">대표자명 *</span><input class="info-input" id="c_owner" placeholder="이름" oninput="toggleJuminField(this)"/>
-            <div id="jumin_wrap" style="display:none;margin-top:4px;"><span class="info-label">주민번호 앞 6자리</span><input class="info-input" id="c_jumin" maxlength="6" inputmode="numeric" placeholder="YYMMDD" style="padding:6px 10px;font-size:12px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/></div>
-          </div>
+          <div class="info-item"><span class="info-label">대표자명 *</span><input class="info-input" id="c_owner" placeholder="이름"/></div>
           <div class="info-item"><span class="info-label">사업자번호 *</span><input class="info-input" id="c_bizno" placeholder="000-00-00000"/></div>
           <div class="info-item"><span class="info-label">사업장 전화</span><input class="info-input" id="c_tel" placeholder="051-000-0000"/></div>
           <div class="info-item"><span class="info-label">대표자 휴대폰 *</span><input class="info-input" id="c_mobile" placeholder="010-0000-0000"/></div>
@@ -285,12 +283,11 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
             <tr><th>제품명</th><th>수량</th><th>금액(원)</th><th>형태</th><th>관리비</th></tr>
           </thead>
           <tbody>
-            <tr><td><input class="tinput" id="name_pos" value="POS" style="width:60px;text-align:center;font-size:12px;"/></td><td><input class="tinput" id="qty_pos"/></td><td><input class="pinput" id="price_pos" placeholder="0" oninput="calcTotal()"/></td><td><select class="type-select" id="type_pos"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_pos" placeholder="0" oninput="calcTotal()"/></td></tr>
-            <tr><td><input class="tinput" id="name_kiosk" value="키오스크" style="width:60px;text-align:center;font-size:12px;"/></td><td><input class="tinput" id="qty_kiosk"/></td><td><input class="pinput" id="price_kiosk" placeholder="0" oninput="calcTotal()"/></td><td><select class="type-select" id="type_kiosk"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_kiosk" placeholder="0" oninput="calcTotal()"/></td></tr>
-            <tr><td><input class="tinput" id="name_table" value="테이블오더" style="width:60px;text-align:center;font-size:12px;"/></td><td><input class="tinput" id="qty_table"/></td><td><input class="pinput" id="price_table" placeholder="0" oninput="calcTotal()"/></td><td><select class="type-select" id="type_table"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_table" placeholder="0" oninput="calcTotal()"/></td></tr>
-            <tr><td><input class="tinput" id="name_qr" value="QR오더" style="width:60px;text-align:center;font-size:12px;"/></td><td><input class="tinput" id="qty_qr"/></td><td><input class="pinput" id="price_qr" placeholder="0" oninput="calcTotal()"/></td><td><select class="type-select" id="type_qr"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_qr" placeholder="0" oninput="calcTotal()"/></td></tr>
-            <tr><td><input class="tinput" id="name_card" value="카드단말기" style="width:60px;text-align:center;font-size:12px;"/></td><td><input class="tinput" id="qty_card"/></td><td><input class="pinput" id="price_card" placeholder="0" oninput="calcTotal()"/></td><td><select class="type-select" id="type_card"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_card" placeholder="0" oninput="calcTotal()"/></td></tr>
-            <tr style="background:#EBF3FF;font-weight:700;"><td style="text-align:center;font-size:12px;font-weight:800;">합계</td><td></td><td style="text-align:right;font-size:12px;" id="total_price">0</td><td></td><td style="text-align:right;font-size:12px;" id="total_mgt">0</td></tr>
+            <tr><td>POS</td><td><input class="tinput" id="qty_pos"/></td><td><input class="pinput" id="price_pos" placeholder="0"/></td><td><select class="type-select" id="type_pos"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_pos" placeholder="0"/></td></tr>
+            <tr><td>키오스크</td><td><input class="tinput" id="qty_kiosk"/></td><td><input class="pinput" id="price_kiosk" placeholder="0"/></td><td><select class="type-select" id="type_kiosk"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_kiosk" placeholder="0"/></td></tr>
+            <tr><td>테이블오더</td><td><input class="tinput" id="qty_table"/></td><td><input class="pinput" id="price_table" placeholder="0"/></td><td><select class="type-select" id="type_table"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_table" placeholder="0"/></td></tr>
+            <tr><td>QR오더</td><td><input class="tinput" id="qty_qr"/></td><td><input class="pinput" id="price_qr" placeholder="0"/></td><td><select class="type-select" id="type_qr"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_qr" placeholder="0"/></td></tr>
+            <tr><td>카드단말기</td><td><input class="tinput" id="qty_card"/></td><td><input class="pinput" id="price_card" placeholder="0"/></td><td><select class="type-select" id="type_card"><option value="임대">임대</option><option value="구매">구매</option><option value="판매+임대">판매+임대</option></select></td><td><input class="pinput" id="mgt_card" placeholder="0"/></td></tr>
           </tbody>
         </table>
         <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -522,11 +519,31 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
+/* ── Firebase 초기화 ── */
+const firebaseConfig = {
+  apiKey: "AIzaSyB6x7uhmAmt2PrUl1SH5I_jP8i0hP35c9A",
+  authDomain: "daesang-contract.firebaseapp.com",
+  databaseURL: "https://daesang-contract-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "daesang-contract",
+  storageBucket: "daesang-contract.firebasestorage.app",
+  messagingSenderId: "611998747428",
+  appId: "1:611998747428:web:4b22853f4907859bba41b1"
+};
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch(e) {
+  console.warn('Firebase 초기화 실패 (오프라인 모드):', e);
+}
+
 /* ── 상수 / 상태 ── */
 const ADMIN_ID = 'n41u0912';
 const ADMIN_PW = '1234';
 const CUSTOMER_ID = 'n41u0912';
 const CUSTOMER_PW = '1234';
+const STORAGE_KEY = 'daesang_contracts';
+let currentContract = null;
 let currentRef = null;
 
 /* ── 로컬스토리지 ── */
@@ -626,30 +643,6 @@ function formatComma(input){
 }
 function parseAmt(v){return Number(String(v||'').replace(/,/g,''))||0;}
 
-/* ── 합계 자동계산 ── */
-function calcTotal(){
-  const ids=['pos','kiosk','table','qr','card'];
-  let tp=0,tm=0;
-  ids.forEach(id=>{
-    tp+=parseAmt(document.getElementById('price_'+id)?.value||'0');
-    tm+=parseAmt(document.getElementById('mgt_'+id)?.value||'0');
-  });
-  const tpEl=document.getElementById('total_price');
-  const tmEl=document.getElementById('total_mgt');
-  if(tpEl)tpEl.textContent=tp?tp.toLocaleString():'0';
-  if(tmEl)tmEl.textContent=tm?tm.toLocaleString()+'원':'0';
-}
-
-/* ── 주민번호 앞자리 입력창 토글 ── */
-function toggleJuminField(el){
-  const wrap=document.getElementById('jumin_wrap');
-  if(wrap)wrap.style.display=el.value.trim()?'block':'none';
-  /* 서명인 이름 동기화 */
-  const nd=document.getElementById('sigNameDisplay');
-  if(nd)nd.textContent=el.value||'-';
-}
-
-
 /* ── 계약 유형 판별 ── */
 function inferType(p){
   if(p.type && p.type !== '임대') return p.type;
@@ -687,16 +680,15 @@ async function submitContract(){
     supplier:{name:'대상정보통신',bizno:'607-10-86981',ceo:'김진선',tel:'051-903-4561',addr:'부산시 남구 동명로 146번길 123'},
     customer:{company:v('c_company'),owner:v('c_owner'),bizno:v('c_bizno'),tel:v('c_tel'),mobile:v('c_mobile'),email:v('c_email'),addr:v('c_addr')},
     products:[
-      {name:v('name_pos')||'POS',qty:v('qty_pos'),price:v('price_pos'),mgt:v('mgt_pos'),type:sel('type_pos')},
-      {name:v('name_kiosk')||'키오스크',qty:v('qty_kiosk'),price:v('price_kiosk'),mgt:v('mgt_kiosk'),type:sel('type_kiosk')},
-      {name:v('name_table')||'테이블오더',qty:v('qty_table'),price:v('price_table'),mgt:v('mgt_table'),type:sel('type_table')},
-      {name:v('name_qr')||'QR오더',qty:v('qty_qr'),price:v('price_qr'),mgt:v('mgt_qr'),type:sel('type_qr')},
-      {name:v('name_card')||'카드단말기',qty:v('qty_card'),price:v('price_card'),mgt:v('mgt_card'),type:sel('type_card')},
+      {name:'POS',qty:v('qty_pos'),price:v('price_pos'),mgt:v('mgt_pos'),type:sel('type_pos')},
+      {name:'키오스크',qty:v('qty_kiosk'),price:v('price_kiosk'),mgt:v('mgt_kiosk'),type:sel('type_kiosk')},
+      {name:'테이블오더',qty:v('qty_table'),price:v('price_table'),mgt:v('mgt_table'),type:sel('type_table')},
+      {name:'QR오더',qty:v('qty_qr'),price:v('price_qr'),mgt:v('mgt_qr'),type:sel('type_qr')},
+      {name:'카드단말기',qty:v('qty_card'),price:v('price_card'),mgt:v('mgt_card'),type:sel('type_card')},
     ],
     conditions:{period:v('c_period'),payday:v('c_payday')},
     memo:v('c_memo'),
     cms:{bank:v('c_bank'),account:v('c_account'),depositor:v('c_depositor'),monthly:v('c_monthly')},
-    jumin:v('c_jumin'),
     signature:getSigDataURL()
   };
   try {
@@ -1076,7 +1068,7 @@ function buildContractHTML(c){
       <td class="label" style="width:70px;">출금 계좌 번호</td><td class="val" style="width:140px;">${c.cms?.account||''}</td>
       <td class="label" style="width:60px;">수납기관명</td><td class="val">${c.supplier.name}</td></tr>
     <tr><td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td class="val">${c.cms?.depositor||''}</td>
-      <td class="label">예금주 주민번호</td><td class="val">${c.jumin||''}</td><td class="label">월 납입금액</td><td class="val">${c.cms?.monthly||''}</td></tr>
+      <td class="label">예금주 주민번호</td><td class="val"></td><td class="label">월 납입금액</td><td class="val">${c.cms?.monthly||''}</td></tr>
     <tr><td class="label">지정출금일자</td><td class="val">매 월 ${c.conditions?.payday||1}일</td>
       <td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td colspan="3" class="val small">본 신청과 관련하여 본인은 금융거래정보(거래은행, 계좌번호)를 출금이체 신규 신청하는 때로부터 해지 신청할 때까지 상기수납기관에 제공하는 것에 동의하며, 출금이체 거래를 신청합니다. <span style="margin-left:16px;">서명: <span style="border-bottom:1px solid #000;padding:0 28px;">&nbsp;</span> (인)</span></td></tr>
   </table>
@@ -1251,7 +1243,7 @@ function shareScreen(target){
     const fields = [
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
-      'c_monthly','c_period','c_payday','c_memo','c_jumin',
+      'c_monthly','c_period','c_payday','c_memo',
       'qty_pos','price_pos','mgt_pos',
       'qty_kiosk','price_kiosk','mgt_kiosk',
       'qty_table','price_table','mgt_table',
@@ -1281,7 +1273,7 @@ function shareScreen(target){
     params.set('screen', target);
     if (isSign) {
       ['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr','c_bank','c_account','c_depositor',
-       'c_monthly','c_period','c_payday','c_memo','c_jumin','qty_pos','price_pos','mgt_pos',
+       'c_monthly','c_period','c_payday','c_memo','qty_pos','price_pos','mgt_pos',
        'qty_kiosk','price_kiosk','mgt_kiosk','qty_table','price_table','mgt_table',
        'qty_qr','price_qr','mgt_qr','qty_card','price_card','mgt_card'
       ].forEach(id=>{ const el=document.getElementById(id); if(el&&el.value) params.set(id,el.value); });
@@ -1361,7 +1353,6 @@ function checkDeepLink(){
     const shareBtn=document.getElementById('btn-share-customer');
     if(shareBtn) shareBtn.style.display='none';
     document.querySelectorAll('#customerForm input[type=text],#customerForm input[type=tel],#customerForm input[type=email],#customerForm input:not([type=checkbox]):not([type=submit])').forEach(el=>{
-      if(el.id==='c_jumin') return;
       el.readOnly=true; el.style.background='#f8fafc'; el.style.color='#64748b'; el.style.cursor='not-allowed';
     });
     document.querySelectorAll('#customerForm select,#customerForm textarea').forEach(el=>{
@@ -1390,11 +1381,11 @@ function checkDeepLink(){
         const data = val.data || {};
         showCustomerDirect();
         ['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr','c_bank','c_account','c_depositor',
-         'c_monthly','c_period','c_payday','c_memo','c_jumin','qty_pos','price_pos','mgt_pos',
+         'c_monthly','c_period','c_payday','c_memo','qty_pos','price_pos','mgt_pos',
          'qty_kiosk','price_kiosk','mgt_kiosk','qty_table','price_table','mgt_table',
          'qty_qr','price_qr','mgt_qr','qty_card','price_card','mgt_card'
         ].forEach(id=>{ const el=document.getElementById(id); if(el&&data[id]!==undefined) el.value=data[id]; });
-        if(data.c_owner){const nd=document.getElementById('sigNameDisplay');if(nd)nd.textContent=data.c_owner;const w=document.getElementById('jumin_wrap');if(w)w.style.display='block';}
+        if(data.c_owner){const nd=document.getElementById('sigNameDisplay');if(nd)nd.textContent=data.c_owner;}
         lockFields(data.c_company);
       });
     } else {
@@ -1407,13 +1398,13 @@ function checkDeepLink(){
     if(screen === 'customer'){
       showCustomerDirect();
       const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr',
-        'c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo','c_jumin',
+        'c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo',
         'qty_pos','price_pos','mgt_pos','qty_kiosk','price_kiosk','mgt_kiosk',
         'qty_table','price_table','mgt_table','qty_qr','price_qr','mgt_qr',
         'qty_card','price_card','mgt_card'];
       fields.forEach(id=>{ const val=params.get(id); if(val){const el=document.getElementById(id);if(el)el.value=val;} });
       const ownerVal=params.get('c_owner');
-      if(ownerVal){const nd=document.getElementById('sigNameDisplay');if(nd)nd.textContent=ownerVal;const w=document.getElementById('jumin_wrap');if(w)w.style.display='block';}
+      if(ownerVal){const nd=document.getElementById('sigNameDisplay');if(nd)nd.textContent=ownerVal;}
       lockFields(params.get('c_company'));
     } else {
       showScreen(screen);
@@ -1452,7 +1443,11 @@ window.addEventListener('load', () => {
   document.getElementById('btn-submit').addEventListener('click', submitContract);
   document.getElementById('chk_all').addEventListener('change', function(){ toggleAllChecks(this); });
 
-  /* 서명인 이름 실시간 표시 - toggleJuminField에서 처리 */
+  /* 서명인 이름 실시간 표시 */
+  document.getElementById('c_owner').addEventListener('input', function(){
+    const nd=document.getElementById('sigNameDisplay');
+    if(nd) nd.textContent=this.value||'-';
+  });
 
   /* 금액 콤마 자동 포맷 */
   ['price_pos','price_kiosk','price_table','price_qr','price_card',
@@ -1519,6 +1514,5 @@ window.addEventListener('load', () => {
   document.getElementById('btn-share-native').addEventListener('click', shareNative);
 });
 </script>
-<script src="app.js"></script>
 </body>
 </html>

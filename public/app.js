@@ -1,4 +1,4 @@
-// v5
+// v2
 /* ── Firebase 초기화 ── */
 const firebaseConfig = {
   apiKey: "AIzaSyB6x7uhmAmt2PrUl1SH5I_jP8i0hP35c9A",
@@ -33,26 +33,6 @@ function inferType(p){
   if(price>0 && mgt>0) return '판매+임대';
   if(price>0 && !mgt)  return '구매';
   return '임대';
-}
-
-function parseAmt(v){return Number(String(v||'').replace(/,/g,''))||0;}
-function calcTotal(){
-  var ids=['pos','kiosk','table','qr','card'];
-  var tp=0,tm=0;
-  ids.forEach(function(id){
-    tp+=parseAmt((document.getElementById('price_'+id)||{}).value||'0');
-    tm+=parseAmt((document.getElementById('mgt_'+id)||{}).value||'0');
-  });
-  var tpEl=document.getElementById('total_price');
-  var tmEl=document.getElementById('total_mgt');
-  if(tpEl)tpEl.textContent=tp?tp.toLocaleString():'0';
-  if(tmEl)tmEl.textContent=tm?tm.toLocaleString()+'원':'0';
-}
-function toggleJuminField(el){
-  var wrap=document.getElementById('jumin_wrap');
-  if(wrap)wrap.style.display=el.value.trim()?'block':'none';
-  var nd=document.getElementById('sigNameDisplay');
-  if(nd)nd.textContent=el.value||'-';
 }
 
 /* ── 로컬스토리지 ── */
@@ -150,16 +130,15 @@ async function submitContract(){
     supplier:{name:'대상정보통신',bizno:'607-10-86981',ceo:'김진선',tel:'051-903-4561',addr:'부산시 남구 동명로 146번길 123'},
     customer:{company:v('c_company'),owner:v('c_owner'),bizno:v('c_bizno'),tel:v('c_tel'),mobile:v('c_mobile'),email:v('c_email'),addr:v('c_addr')},
     products:[
-      {name:v('name_pos')||'POS',qty:v('qty_pos'),price:v('price_pos'),mgt:v('mgt_pos'),type:'임대'},
-      {name:v('name_kiosk')||'키오스크',qty:v('qty_kiosk'),price:v('price_kiosk'),mgt:v('mgt_kiosk'),type:'임대'},
-      {name:v('name_table')||'테이블오더',qty:v('qty_table'),price:v('price_table'),mgt:v('mgt_table'),type:'임대'},
-      {name:v('name_qr')||'QR오더',qty:v('qty_qr'),price:v('price_qr'),mgt:v('mgt_qr'),type:'임대'},
-      {name:v('name_card')||'카드단말기',qty:v('qty_card'),price:v('price_card'),mgt:v('mgt_card'),type:'임대'},
+      {name:'POS',qty:v('qty_pos'),price:v('price_pos'),mgt:v('mgt_pos'),type:'임대'},
+      {name:'키오스크',qty:v('qty_kiosk'),price:v('price_kiosk'),mgt:v('mgt_kiosk'),type:'임대'},
+      {name:'테이블오더',qty:v('qty_table'),price:v('price_table'),mgt:v('mgt_table'),type:'임대'},
+      {name:'QR오더',qty:v('qty_qr'),price:v('price_qr'),mgt:v('mgt_qr'),type:'임대'},
+      {name:'카드단말기',qty:v('qty_card'),price:v('price_card'),mgt:v('mgt_card'),type:'임대'},
     ],
     conditions:{period:v('c_period'),payday:v('c_payday')},
     memo:v('c_memo'),
     cms:{bank:v('c_bank'),account:v('c_account'),depositor:v('c_depositor'),monthly:v('c_monthly')},
-    jumin:v('c_jumin'),
     signature:getSigDataURL()
   };
   try {
@@ -557,7 +536,7 @@ function buildContractHTML(c){
       <td class="label" style="width:70px;">출금 계좌 번호</td><td class="val" style="width:140px;">${c.cms?.account||''}</td>
       <td class="label" style="width:60px;">수납기관명</td><td class="val">${c.supplier.name}</td></tr>
     <tr><td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td class="val">${c.cms?.depositor||''}</td>
-      <td class="label">예금주 주민번호</td><td class="val">${c.jumin||''}</td><td class="label">월 납입금액</td><td class="val">${c.cms?.monthly||''}</td></tr>
+      <td class="label">예금주 주민번호</td><td class="val"></td><td class="label">월 납입금액</td><td class="val">${c.cms?.monthly||''}</td></tr>
     <tr><td class="label">지정출금일자</td><td class="val">매 월 ${c.conditions?.payday||1}일</td>
       <td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td colspan="3" class="val small">본 신청과 관련하여 본인은 금융거래정보(거래은행, 계좌번호)를 출금이체 신규 신청하는 때로부터 해지 신청할 때까지 상기수납기관에 제공하는 것에 동의하며, 출금이체 거래를 신청합니다. <span style="margin-left:16px;">서명: <span style="border-bottom:1px solid #000;padding:0 28px;">&nbsp;</span> (인)</span></td></tr>
   </table>
