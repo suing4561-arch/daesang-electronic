@@ -56,6 +56,12 @@ function showScreen(id){
     document.getElementById('mypageLogin').style.display='block';
     document.getElementById('mypageDash').style.display='none';
   }
+  if(id==='customer'){
+    const cl = document.getElementById('customerLogin');
+    const cf = document.getElementById('customerForm');
+    if(cl) { cl.style.display='flex'; }
+    if(cf) { cf.style.display='none'; }
+  }
   window.scrollTo(0,0);
 }
 
