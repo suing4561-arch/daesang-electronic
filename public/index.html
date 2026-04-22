@@ -471,7 +471,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-actions" id="modalActions">
       <button id="btn-modal-print" class="action-btn btn-print">🖨️ 인쇄 / 출력</button>
-      <button id="btn-modal-pdf" class="action-btn btn-pdf">🖨️ PDF / 인쇄</button>
+      <button id="btn-modal-pdf" class="action-btn btn-pdf">📄 PDF로 저장</button>
       <button id="btn-modal-email" class="action-btn" style="background:#ECFDF5;color:var(--accent-dim);display:none;">📧 이메일 전송</button>
     </div>
   </div>
@@ -1223,12 +1223,7 @@ async function generatePDF(contract) {
   }
 }
 
-function savePDF(){
-  if(!currentContract)return;
-  document.getElementById('printArea').innerHTML=buildContractHTML(currentContract);
-  showToast('🖨️ 인쇄 화면에서 PDF로 저장을 선택하세요');
-  setTimeout(()=>window.print(),300);
-}
+function savePDF() { generatePDF(currentContract); }
 function customerPrint() { generatePDF(currentContract); }
 
 /* ── 공유 ── */
