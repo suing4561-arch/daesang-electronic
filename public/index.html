@@ -403,6 +403,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <div class="admin-tabs">
         <div class="admin-tab active" data-panel="tab-all">📋 전체 계약</div>
         <div class="admin-tab" data-panel="tab-expire">⚠️ 만기 임박 관리</div>
+        <div class="admin-tab" data-panel="tab-trash">🗑️ 휴지통</div>
       </div>
 
       <div id="tab-all" class="admin-tab-panel active">
@@ -422,6 +423,13 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
           만기 전 갱신 또는 해지 안내가 필요합니다.
         </div>
         <div id="expireList" class="contract-list"></div>
+      </div>
+
+      <div id="tab-trash" class="admin-tab-panel">
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#991B1B;line-height:1.6;">
+          🗑️ <strong>휴지통</strong> — 삭제된 계약서 목록입니다. 복구하거나 완전 삭제할 수 있습니다.
+        </div>
+        <div id="trashList" class="contract-list"></div>
       </div>
     </div>
   </div>
@@ -473,6 +481,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <button id="btn-modal-print" class="action-btn btn-print">🖨️ 인쇄 / 출력</button>
       <button id="btn-modal-pdf" class="action-btn btn-pdf">📄 PDF로 저장</button>
       <button id="btn-modal-email" class="action-btn" style="background:#ECFDF5;color:var(--accent-dim);display:none;">📧 이메일 전송</button>
+      <button id="btn-modal-delete" class="action-btn" style="background:#FEF2F2;color:#EF4444;display:none;">🗑️ 삭제</button>
     </div>
   </div>
 </div>
@@ -553,6 +562,14 @@ function getContracts(){
 }
 function saveContractsCache(l){
   try { localStorage.setItem(STORAGE_KEY,JSON.stringify(l)); } catch(e){}
+}
+const TRASH_KEY = 'daesang_trash';
+function getTrash(){
+  try { const r=localStorage.getItem(TRASH_KEY); return r?JSON.parse(r):[]; }
+  catch(e){ return []; }
+}
+function saveTrashCache(l){
+  try { localStorage.setItem(TRASH_KEY,JSON.stringify(l)); } catch(e){}
 }
 
 /* ── 화면 전환 ── */
@@ -761,6 +778,20 @@ function loadAdminData(){
     hideLoading();
     renderAdminStats(getContracts());
   }
+  loadTrashData();
+}
+
+function loadTrashData(){
+  if(db){
+    db.ref('trash').once('value', snap=>{
+      const data=snap.val();
+      const trashContracts=data?Object.values(data).sort((a,b)=>new Date(b.deletedAt||b.signedAt)-new Date(a.deletedAt||a.signedAt)):[];
+      saveTrashCache(trashContracts);
+      renderTrashList(trashContracts);
+    });
+  } else {
+    renderTrashList(getTrash());
+  }
 }
 
 function renderAdminStats(contracts){
@@ -830,9 +861,83 @@ function renderExpireList(contracts){
         <div class="contract-meta" style="color:#92400E;font-weight:600;">만기일: ${expStr} <span style="background:#FCD34D;padding:1px 6px;border-radius:10px;font-size:11px;">D-${daysLeft}</span></div>
       </div>
       <span class="contract-status status-warn">만기임박</span>
-      <span class="contract-arrow">›</span>
+      <button class="trash-quick-btn" data-trash-id="${c.id}" title="휴지통으로 이동" style="background:#FEF2F2;color:#EF4444;border:none;padding:6px 9px;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0;line-height:1;">🗑️</button>
     </div>`;
   }).join('');
+}
+
+/* ── 휴지통 ── */
+function renderTrashList(contracts){
+  const list=document.getElementById('trashList');
+  if(!list) return;
+  if(!contracts.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">🗑️</div><p>휴지통이 비어 있습니다</p></div>';return;}
+  list.innerHTML=contracts.map(c=>{
+    const d=new Date(c.signedAt);
+    const dd=c.deletedAt?new Date(c.deletedAt):null;
+    const dateStr=d.toLocaleDateString('ko-KR');
+    const delStr=dd?dd.toLocaleDateString('ko-KR')+' '+dd.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):'';
+    return`<div class="contract-item" style="border-left:3px solid #EF4444;">
+      <div class="contract-avatar" style="background:#FEE2E2;color:#EF4444;">${c.customer.company.slice(0,2)}</div>
+      <div class="contract-info">
+        <div class="contract-name">${c.customer.company}</div>
+        <div class="contract-meta">${c.customer.owner} · ${c.customer.mobile} · ${dateStr}</div>
+        ${delStr?`<div class="contract-meta" style="color:#EF4444;">삭제일: ${delStr}</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button onclick="restoreContract('${c.id}')" style="background:#ECFDF5;color:#059669;border:none;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;">↩ 복구</button>
+        <button onclick="permanentDelete('${c.id}')" style="background:#FEF2F2;color:#EF4444;border:none;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;">🗑️ 완전삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function moveToTrash(id){
+  if(!confirm('이 계약서를 휴지통으로 이동하시겠습니까?')) return;
+  const contracts=getContracts();
+  const c=contracts.find(x=>x.id===id);
+  if(!c){showToast('❌ 계약서를 찾을 수 없습니다');return;}
+  c.deletedAt=new Date().toISOString();
+  showLoading('처리 중...');
+  if(db){
+    db.ref('trash/'+id).set(c).then(()=>db.ref('contracts/'+id).remove()).then(()=>{
+      hideLoading();closeModal();showToast('🗑️ 휴지통으로 이동했습니다');loadAdminData();
+    }).catch(e=>{hideLoading();showToast('❌ 처리 실패: '+e.message);});
+  } else {
+    saveContractsCache(contracts.filter(x=>x.id!==id));
+    const trash=getTrash();trash.unshift(c);saveTrashCache(trash);
+    hideLoading();closeModal();showToast('🗑️ 휴지통으로 이동했습니다');loadAdminData();
+  }
+}
+
+function restoreContract(id){
+  showLoading('복구 중...');
+  if(db){
+    db.ref('trash/'+id).once('value').then(snap=>{
+      if(!snap.exists()){hideLoading();showToast('❌ 계약서를 찾을 수 없습니다');return Promise.reject('notfound');}
+      const c=snap.val();delete c.deletedAt;
+      return db.ref('contracts/'+id).set(c).then(()=>db.ref('trash/'+id).remove());
+    }).then(()=>{hideLoading();showToast('✅ 계약서가 복구되었습니다');loadAdminData();}).catch(e=>{if(e!=='notfound')showToast('❌ 복구 실패');hideLoading();});
+  } else {
+    const trash=getTrash();const c=trash.find(x=>x.id===id);
+    if(!c){hideLoading();showToast('❌ 계약서를 찾을 수 없습니다');return;}
+    delete c.deletedAt;
+    const contracts=getContracts();contracts.unshift(c);saveContractsCache(contracts);
+    saveTrashCache(trash.filter(x=>x.id!==id));
+    hideLoading();showToast('✅ 계약서가 복구되었습니다');loadAdminData();
+  }
+}
+
+function permanentDelete(id){
+  if(!confirm('완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  showLoading('삭제 중...');
+  if(db){
+    db.ref('trash/'+id).remove().then(()=>{
+      hideLoading();showToast('🗑️ 완전 삭제되었습니다');loadAdminData();
+    }).catch(e=>{hideLoading();showToast('❌ 삭제 실패: '+e.message);});
+  } else {
+    saveTrashCache(getTrash().filter(x=>x.id!==id));
+    hideLoading();showToast('🗑️ 완전 삭제되었습니다');loadAdminData();
+  }
 }
 
 function applyFilter(){
@@ -930,12 +1035,15 @@ function openDetail(id,showActions){
 
   const printBtn = document.getElementById('btn-modal-print');
   const emailBtn = document.getElementById('btn-modal-email');
+  const deleteBtn = document.getElementById('btn-modal-delete');
   if(showActions){
     printBtn.textContent = '🖨️ 인쇄 / 출력';
     emailBtn.style.display = 'none';
+    if(deleteBtn) deleteBtn.style.display = '';
   } else {
     printBtn.textContent = '🖨️ 계약서 인쇄';
     emailBtn.style.display = '';
+    if(deleteBtn) deleteBtn.style.display = 'none';
   }
   document.getElementById('detailModal').classList.add('open');
 }
@@ -1480,6 +1588,8 @@ window.addEventListener('load', () => {
     if(item) openDetail(item.dataset.id, item.dataset.actions === 'true');
   });
   document.getElementById('expireList').addEventListener('click', e => {
+    const trashBtn = e.target.closest('.trash-quick-btn');
+    if(trashBtn){ e.stopPropagation(); moveToTrash(trashBtn.dataset.trashId); return; }
     const item = e.target.closest('.contract-item');
     if(item) openDetail(item.dataset.id, true);
   });
@@ -1504,6 +1614,7 @@ window.addEventListener('load', () => {
   document.getElementById('btn-modal-print').addEventListener('click', printContract);
   document.getElementById('btn-modal-pdf').addEventListener('click', savePDF);
   document.getElementById('btn-modal-email').addEventListener('click', sendEmail);
+  document.getElementById('btn-modal-delete').addEventListener('click', () => { if(currentContract) moveToTrash(currentContract.id); });
 
   /* 공유 모달 */
   document.getElementById('shareModal').addEventListener('click', function(e){ if(e.target===this) closeShareModal(); });
