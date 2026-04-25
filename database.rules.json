@@ -7,8 +7,8 @@
       ".write": true
     },
     "trash": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": true,
+      ".write": true
     },
     "tempForms": {
       ".read": true,
