@@ -133,8 +133,9 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 .status-done{background:rgba(0,200,150,.12);color:var(--accent-dim);}
 .status-warn{background:#FEF3C7;color:#92400E;}
 .contract-arrow{color:var(--gray4);font-size:18px;}
-.memo-icon-btn{background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;border-radius:6px;line-height:1;flex-shrink:0;}
-.memo-icon-btn:hover{background:#FFFBEB;}
+.memo-icon-btn{background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px;border-radius:6px;line-height:1;flex-shrink:0;opacity:0.35;}
+.memo-icon-btn:hover{background:#FFFBEB;opacity:1;}
+.memo-icon-btn.has-memo{opacity:1;}
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(10,22,40,.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;}
 .modal-overlay.open{display:flex;}
@@ -495,12 +496,13 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
 </div>
 
 <!-- ═══ MEMO POPUP ═══ -->
-<div id="memoPopup" style="display:none;position:fixed;z-index:500;background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:16px 18px;max-width:300px;min-width:200px;font-size:13px;line-height:1.6;color:#333;">
+<div id="memoPopup" style="display:none;position:fixed;z-index:500;background:#fff;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:16px 18px;width:280px;font-size:13px;line-height:1.6;color:#333;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <b style="font-size:13px;">📝 메모</b>
     <button onclick="closeMemoPopup()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888;line-height:1;">✕</button>
   </div>
-  <div id="memoPopupText" style="white-space:pre-wrap;word-break:break-all;"></div>
+  <textarea id="memoPopupInput" rows="4" placeholder="메모를 입력하세요..." style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+  <button onclick="saveMemoPopup()" style="margin-top:8px;width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">💾 저장</button>
 </div>
 
 <!-- ═══ SHARE MODAL ═══ -->
@@ -873,7 +875,7 @@ function renderContractList(contracts,listId,showActions){
         <div class="contract-meta" style="color:${isExpiring?'#92400E':'var(--gray5)'}">만기: ${expStr}${isExpiring?` (D-${daysLeft})`:''}</div>
       </div>
       <span class="contract-status ${isExpiring?'status-warn':'status-done'}">${isExpiring?'만기임박':'서명완료'}</span>
-      ${c.memo?`<button class="memo-icon-btn" data-memo="${c.memo.replace(/"/g,'&quot;')}" onclick="openMemoPopup(event,this)" title="메모 보기">📝</button>`:''}
+      <button class="memo-icon-btn${c.adminMemo?' has-memo':''}" data-id="${c.id}" data-memo="${(c.adminMemo||'').replace(/"/g,'&quot;')}" onclick="openMemoPopup(event,this)" title="${c.adminMemo?'메모 보기/수정':'메모 추가'}">📝</button>
       <span class="contract-arrow">›</span>
     </div>`;
   }).join('');
@@ -1088,19 +1090,38 @@ function openDetail(id,showActions){
 }
 function closeModal(){document.getElementById('detailModal').classList.remove('open');}
 
+let _memoContractId = null;
 function openMemoPopup(e, btn){
   e.stopPropagation();
+  _memoContractId = btn.dataset.id;
+  document.getElementById('memoPopupInput').value = btn.dataset.memo || '';
   const popup = document.getElementById('memoPopup');
-  document.getElementById('memoPopupText').textContent = btn.dataset.memo;
-  const rect = btn.getBoundingClientRect();
   popup.style.display = 'block';
-  const pw = popup.offsetWidth;
+  const rect = btn.getBoundingClientRect();
+  const pw = 280;
   let left = rect.left + window.scrollX;
   if(left + pw > window.innerWidth - 10) left = window.innerWidth - pw - 10;
+  if(left < 8) left = 8;
   popup.style.left = left + 'px';
   popup.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  setTimeout(()=>document.getElementById('memoPopupInput').focus(), 50);
 }
-function closeMemoPopup(){document.getElementById('memoPopup').style.display='none';}
+function closeMemoPopup(){document.getElementById('memoPopup').style.display='none'; _memoContractId=null;}
+async function saveMemoPopup(){
+  if(!_memoContractId) return;
+  const text = document.getElementById('memoPopupInput').value.trim();
+  const contracts = getContracts();
+  const c = contracts.find(x=>x.id===_memoContractId);
+  if(!c) return;
+  c.adminMemo = text;
+  try{
+    await db.ref('contracts/'+c.id+'/adminMemo').set(text);
+    saveContractsCache(contracts);
+    closeMemoPopup();
+    showToast('✅ 메모가 저장되었습니다');
+    loadAdminData();
+  }catch(err){showToast('❌ 저장 실패');}
+}
 document.addEventListener('click', function(e){
   const popup = document.getElementById('memoPopup');
   if(popup && popup.style.display !== 'none' && !popup.contains(e.target)) closeMemoPopup();
