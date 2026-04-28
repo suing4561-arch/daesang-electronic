@@ -22,7 +22,7 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--font);background:var(--gray2);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
-.screen{display:none;min-height:100vh;}.screen.active{display:block;}
+.screen{display:none;min-height:100vh;position:relative;}.screen.active{display:block;}
 .top-nav{background:var(--navy);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .nav-logo{font-size:15px;font-weight:700;color:var(--white);letter-spacing:-.3px;}
 .nav-logo span{color:var(--accent);}
@@ -226,6 +226,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <p>사업자번호 + 대표자 성함으로 내 계약서 확인 · 다운로드</p>
     </div>
   </div>
+  <div style="position:absolute;bottom:16px;left:18px;font-size:11px;color:var(--gray4);">만든사람 : M.H.S</div>
 </div>
 
 <!-- ═══ CUSTOMER SIGN ═══ -->
