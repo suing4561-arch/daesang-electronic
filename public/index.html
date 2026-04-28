@@ -486,6 +486,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
       <button id="btn-modal-print" class="action-btn btn-print">🖨️ 인쇄 / 출력</button>
       <button id="btn-modal-pdf" class="action-btn btn-pdf">📄 PDF로 저장</button>
       <button id="btn-modal-email" class="action-btn" style="background:#ECFDF5;color:var(--accent-dim);display:none;">📧 이메일 전송</button>
+      <button id="btn-modal-edit" class="action-btn" style="background:#EEF2FF;color:#4F46E5;display:none;">✏️ 유형 수정</button>
       <button id="btn-modal-delete" class="action-btn" style="background:#FEF2F2;color:#EF4444;display:none;">🗑️ 삭제</button>
     </div>
   </div>
@@ -1059,18 +1060,62 @@ function openDetail(id,showActions){
   const printBtn = document.getElementById('btn-modal-print');
   const emailBtn = document.getElementById('btn-modal-email');
   const deleteBtn = document.getElementById('btn-modal-delete');
+  const editBtn = document.getElementById('btn-modal-edit');
   if(showActions){
     printBtn.textContent = '🖨️ 인쇄 / 출력';
     emailBtn.style.display = 'none';
     if(deleteBtn) deleteBtn.style.display = '';
+    if(editBtn){ editBtn.style.display = ''; editBtn.textContent = '✏️ 유형 수정'; editBtn.onclick = editContractTypes; }
   } else {
     printBtn.textContent = '🖨️ 계약서 인쇄';
     emailBtn.style.display = '';
     if(deleteBtn) deleteBtn.style.display = 'none';
+    if(editBtn) editBtn.style.display = 'none';
   }
   document.getElementById('detailModal').classList.add('open');
 }
 function closeModal(){document.getElementById('detailModal').classList.remove('open');}
+
+function editContractTypes(){
+  const c = currentContract;
+  const rows = c.products.map((p, idx) => {
+    if(!p.qty || p.qty === '0') return '';
+    const cur = inferType(p);
+    return `<tr>
+      <td>${p.name}</td><td>${p.qty}</td>
+      <td>${p.price ? parseAmt(p.price).toLocaleString()+'원' : '-'}</td>
+      <td><select class="type-select edit-type-sel" data-idx="${idx}">
+        <option value="임대" ${cur==='임대'?'selected':''}>임대</option>
+        <option value="구매" ${cur==='구매'?'selected':''}>구매</option>
+        <option value="판매+임대" ${cur==='판매+임대'?'selected':''}>판매+임대</option>
+      </select></td>
+      <td>${p.mgt ? parseAmt(p.mgt).toLocaleString()+'원' : '-'}</td>
+    </tr>`;
+  }).join('');
+  const tbody = document.querySelector('#modalBody .prod-table tbody');
+  if(tbody) tbody.innerHTML = rows || '<tr><td colspan="5" style="color:var(--gray4)">-</td></tr>';
+  const editBtn = document.getElementById('btn-modal-edit');
+  editBtn.textContent = '💾 저장';
+  editBtn.onclick = saveContractTypes;
+}
+
+async function saveContractTypes(){
+  const c = currentContract;
+  document.querySelectorAll('.edit-type-sel').forEach(sel => {
+    const idx = parseInt(sel.dataset.idx);
+    c.products[idx].type = sel.value;
+  });
+  showLoading('저장 중...');
+  try {
+    await db.ref('contracts/' + c.id).set(c);
+    const list = getContracts();
+    const i = list.findIndex(x => x.id === c.id);
+    if(i >= 0){ list[i] = c; saveContractsCache(list); }
+    hideLoading(); closeModal(); showToast('✅ 유형이 저장되었습니다'); loadAdminData();
+  } catch(e) {
+    hideLoading(); showToast('❌ 저장 실패: ' + e.message);
+  }
+}
 
 /* ── 고객 포털 ── */
 function mypageLogin(){
