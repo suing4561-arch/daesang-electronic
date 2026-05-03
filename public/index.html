@@ -276,7 +276,7 @@ body{font-family:var(--font);background:var(--gray2);color:var(--text);min-heigh
           <div class="info-item full"><span class="info-label">이메일</span><input class="info-input" id="c_email" placeholder="이메일 주소 (선택)"/></div>
           <div class="info-item full"><span class="info-label">사업장주소 *</span><input class="info-input" id="c_addr" placeholder="주소를 입력하세요"/></div>
         </div>
-        <div id="jumin_wrap" style="display:none;margin-top:10px;">
+        <div id="jumin_wrap" style="margin-top:10px;">
           <span class="info-label">주민번호 앞자리 (생년월일)</span>
           <input class="info-input" id="c_jumin" placeholder="생년월일 6자리 (예: 901231)" maxlength="6" inputmode="numeric" style="margin-top:6px;"/>
         </div>
@@ -1325,7 +1325,6 @@ function buildContractHTML(c){
     <tr>
       <td class="label center" style="width:18%;">고객(乙) 전자서명</td>
       <td class="center" style="width:32%;padding:4px;">
-        <div style="font-size:9pt;font-weight:700;margin-bottom:2px;">${c.customer.owner}&nbsp;&nbsp;(인)</div>
         <img src="${c.signature}" class="pc-sig-img"/>
       </td>
       <td class="label center" style="width:18%;">담당자(甲) 서명</td>
