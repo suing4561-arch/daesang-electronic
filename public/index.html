@@ -751,8 +751,11 @@ async function submitContract(){
       await db.ref('contracts/' + contract.id).set(contract);
       if(currentRef) db.ref('tempForms/' + currentRef + '/signed').set(true);
     }
-  } catch(e){ console.error('Firebase 저장 실패:', e); }
-  const list=getContracts();list.unshift(contract);saveContractsCache(list);
+    const list=getContracts();list.unshift(contract);saveContractsCache(list);
+  } catch(e){
+    console.error('Firebase 저장 실패:', e);
+    const list=getContracts();list.unshift(contract);saveContractsCache(list);
+  }
   currentContract = contract;
   hideLoading();showScreen('success');
 }
