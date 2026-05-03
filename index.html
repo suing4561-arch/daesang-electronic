@@ -1476,7 +1476,7 @@ function shareScreen(target){
     const fields = [
       'c_company','c_owner','c_bizno','c_tel','c_mobile',
       'c_email','c_addr','c_bank','c_account','c_depositor',
-      'c_monthly','c_period','c_payday','c_memo',
+      'c_monthly','c_period','c_payday','c_memo','c_jumin',
       'qty_pos','price_pos','mgt_pos',
       'qty_kiosk','price_kiosk','mgt_kiosk',
       'qty_table','price_table','mgt_table',
@@ -1614,7 +1614,7 @@ function checkDeepLink(){
         const data = val.data || {};
         showCustomerDirect();
         ['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr','c_bank','c_account','c_depositor',
-         'c_monthly','c_period','c_payday','c_memo','qty_pos','price_pos','mgt_pos',
+         'c_monthly','c_period','c_payday','c_memo','c_jumin','qty_pos','price_pos','mgt_pos',
          'qty_kiosk','price_kiosk','mgt_kiosk','qty_table','price_table','mgt_table',
          'qty_qr','price_qr','mgt_qr','qty_card','price_card','mgt_card'
         ].forEach(id=>{ const el=document.getElementById(id); if(el&&data[id]!==undefined) el.value=data[id]; });
@@ -1632,7 +1632,7 @@ function checkDeepLink(){
     if(screen === 'customer'){
       showCustomerDirect();
       const fields=['c_company','c_owner','c_bizno','c_tel','c_mobile','c_email','c_addr',
-        'c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo',
+        'c_bank','c_account','c_depositor','c_monthly','c_period','c_payday','c_memo','c_jumin',
         'qty_pos','price_pos','mgt_pos','qty_kiosk','price_kiosk','mgt_kiosk',
         'qty_table','price_table','mgt_table','qty_qr','price_qr','mgt_qr',
         'qty_card','price_card','mgt_card'];
