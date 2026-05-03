@@ -743,7 +743,7 @@ async function submitContract(){
     ],
     conditions:{period:v('c_period'),payday:v('c_payday')},
     memo:v('c_memo'),
-    cms:{bank:v('c_bank'),account:v('c_account'),depositor:v('c_depositor'),monthly:v('c_monthly')},
+    cms:{bank:v('c_bank'),account:v('c_account'),depositor:v('c_depositor'),monthly:v('c_monthly'),jumin:v('c_jumin')},
     signature:getSigDataURL()
   };
   try {
@@ -1241,6 +1241,7 @@ function sendEmail(){
 function buildContractHTML(c){
   const d=new Date(c.signedAt);
   const yy=d.getFullYear(),mm=d.getMonth()+1,dd=d.getDate();
+  const totalMgt=c.products.reduce((s,p)=>s+(p.mgt?parseAmt(p.mgt):0),0);
   return`<div class="pc">
   <div class="pc-title-wrap"><div class="pc-title">카드단말기 · POS · 키오스크 · 테이블오더 · QR오더&nbsp;&nbsp;판매 할부 무상 임대 유지보수 및 서비스 계약서</div></div>
   <div class="pc-van"><span>VAN 구분 : 나이스정보통신</span><span>계약번호 : ${c.id}</span><span>서명일시 : ${yy}년 ${mm}월 ${dd}일</span></div>
@@ -1282,12 +1283,12 @@ function buildContractHTML(c){
   <div class="section-title" style="margin-bottom:0;">◎ 주요공급 조건 및 특약사항(표3)</div>
   <table style="margin-bottom:4px;">
     <tr>
-      <td class="label" style="width:70px;">관 리 비/ASP</td><td class="val" style="width:130px;">${c.products.find(p=>p.mgt)?parseAmt(c.products.find(p=>p.mgt).mgt).toLocaleString()+'원(부가세 별도)':''}</td>
+      <td class="label" style="width:70px;">관 리 비/ASP</td><td class="val" style="width:130px;">${totalMgt>0?totalMgt.toLocaleString()+'원(부가세 별도)':''}</td>
       <td class="label" style="width:60px;">임 대 물 품</td><td class="val" style="width:120px;">${c.products.filter(p=>p.qty&&inferType(p)==='임대').map(p=>p.name).join(', ')}</td>
       <td class="label" style="width:70px;">의무사용기간</td><td class="val">${c.conditions?.period||36}개월</td>
       <td class="label" style="width:60px;">지정출금일</td><td class="val">매월 ${c.conditions?.payday||1}일</td>
     </tr>
-    <tr><td class="label">비&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;고</td><td colspan="7" class="val small">CCTV설치시 AS목적으로 도메인을 귀사에서 보관함에 동의합니다. □&nbsp;&nbsp;"갑"은 업무상 필요시 "을"의 POS 원격을 자동연결하여 사용할 수 있음에 동의함 □&nbsp;&nbsp;"을"은 "갑"에게 카드사가맹점 관련된 서류신청 및 제신고, 단말기개통등 모든 업무를 위임합니다. □</td></tr>
+    <tr><td class="label">비&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;고</td><td colspan="7" class="val small">CCTV설치시 AS목적으로 도메인을 귀사에서 보관함에 동의합니다. □&nbsp;&nbsp;"갑"은 업무상 필요시 "을"의 POS 원격을 자동연결하여 사용할 수 있음에 동의함 □&nbsp;&nbsp;"을"은 "갑"에게 카드사가맹점 관련된 서류신청 및 제신고, 단말기개통등 모든 업무를 위임합니다. □&nbsp;&nbsp;<span style="margin-left:12px;">서명: <img src="${c.signature}" style="height:24px;vertical-align:middle;"> (인)</span></td></tr>
   </table>
   <div class="section-title" style="margin-bottom:0;">◎【 CMS 출금이체신청 및 금융거래정보의 제공 동의서 】(표4)</div>
   <table style="margin-bottom:4px;">
@@ -1295,7 +1296,7 @@ function buildContractHTML(c){
       <td class="label" style="width:70px;">출금 계좌 번호</td><td class="val" style="width:140px;">${c.cms?.account||''}</td>
       <td class="label" style="width:60px;">수납기관명</td><td class="val">${c.supplier.name}</td></tr>
     <tr><td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td class="val">${c.cms?.depositor||''}</td>
-      <td class="label">예금주 주민번호</td><td class="val"></td><td class="label">월 납입금액</td><td class="val">${c.cms?.monthly||''}</td></tr>
+      <td class="label">예금주 주민번호</td><td class="val">${c.cms?.jumin||''}</td><td class="label">월 납입금액</td><td class="val">${c.cms?.monthly||''}</td></tr>
     <tr><td class="label">지정출금일자</td><td class="val">매 월 ${c.conditions?.payday||1}일</td>
       <td class="label">예&nbsp;&nbsp;금&nbsp;&nbsp;주</td><td colspan="3" class="val small">본 신청과 관련하여 본인은 금융거래정보(거래은행, 계좌번호)를 출금이체 신규 신청하는 때로부터 해지 신청할 때까지 상기수납기관에 제공하는 것에 동의하며, 출금이체 거래를 신청합니다. <span style="margin-left:16px;">서명: <img src="${c.signature}" style="height:26px;vertical-align:middle;"> (인)</span></td></tr>
   </table>
@@ -1328,13 +1329,13 @@ function buildContractHTML(c){
         <img src="${c.signature}" class="pc-sig-img"/>
       </td>
       <td class="label center" style="width:18%;">담당자(甲) 서명</td>
-      <td class="center" style="width:32%;height:60px;">&nbsp;</td>
+      <td class="center" style="width:32%;height:60px;"><div style="display:inline-block;border:2px solid #c00;border-radius:50%;padding:6px 14px;color:#c00;font-weight:700;font-size:13pt;transform:rotate(-10deg);letter-spacing:1px;">문홍성</div></td>
     </tr>
     <tr>
       <td class="label center">서명일시</td>
       <td class="center small">${yy}년 ${mm}월 ${dd}일 ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}</td>
       <td class="label center">처리일시</td>
-      <td class="center small">&nbsp;&nbsp;&nbsp;&nbsp;년&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;일</td>
+      <td class="center small">${yy}년 ${mm}월 ${dd}일</td>
     </tr>
   </table>
   <div class="pc-footer">
