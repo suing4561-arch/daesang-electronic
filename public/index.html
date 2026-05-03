@@ -1329,13 +1329,19 @@ function buildContractHTML(c){
         <img src="${c.signature}" class="pc-sig-img"/>
       </td>
       <td class="label center" style="width:18%;">담당자(甲) 서명</td>
-      <td class="center" style="width:32%;height:60px;"><div style="display:inline-block;border:2px solid #c00;border-radius:50%;padding:6px 14px;color:#c00;font-weight:700;font-size:13pt;transform:rotate(-10deg);letter-spacing:1px;">문홍성</div></td>
+      <td class="center" style="width:32%;height:68px;padding:4px;vertical-align:middle;">
+        <svg width="62" height="62" viewBox="0 0 62 62" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="58" height="58" rx="4" fill="none" stroke="#cc0000" stroke-width="2.5"/>
+          <rect x="7" y="7" width="48" height="48" rx="2" fill="none" stroke="#cc0000" stroke-width="1"/>
+          <text x="31" y="40" text-anchor="middle" font-family="'Nanum Gothic',serif" font-size="19" font-weight="bold" fill="#cc0000" letter-spacing="3">문홍성</text>
+        </svg>
+      </td>
     </tr>
     <tr>
       <td class="label center">서명일시</td>
       <td class="center small">${yy}년 ${mm}월 ${dd}일 ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}</td>
       <td class="label center">처리일시</td>
-      <td class="center small">${yy}년 ${mm}월 ${dd}일</td>
+      <td class="center small">${yy}년&nbsp;&nbsp;&nbsp;${mm}월&nbsp;&nbsp;&nbsp;${dd}일</td>
     </tr>
   </table>
   <div class="pc-footer">
