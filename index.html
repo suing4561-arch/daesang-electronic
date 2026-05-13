@@ -749,6 +749,17 @@ async function submitContract(){
   try {
     if(db){
       await db.ref('contracts/' + contract.id).set(contract);
+      // daesang-as Firebase에 계약서 동기화
+      const asDb = firebase.database(firebase.app(), 'https://daesang-as-default-rtdb.asia-southeast1.firebasedatabase.app');
+      await asDb.ref('contract_sync/' + contract.id).set({
+        id: contract.id,
+        bizName: contract.customer?.company || '',
+        owner: contract.customer?.owner || '',
+        products: contract.products || [],
+        totalAmount: contract.totalAmount || 0,
+        signedAt: contract.signedAt,
+        synced: false
+      });
       if(currentRef) db.ref('tempForms/' + currentRef + '/signed').set(true);
     }
     const list=getContracts();list.unshift(contract);saveContractsCache(list);
